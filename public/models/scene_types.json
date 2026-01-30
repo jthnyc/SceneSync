@@ -1,0 +1,14 @@
+{
+  "classes": [
+    "Action & Intensity",
+    "Ambiance & Texture",
+    "Drama & Emotional",
+    "Montage & Narrative"
+  ],
+  "encoding": {
+    "Action & Intensity": 0,
+    "Ambiance & Texture": 1,
+    "Drama & Emotional": 2,
+    "Montage & Narrative": 3
+  }
+}
