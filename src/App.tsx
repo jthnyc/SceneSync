@@ -111,7 +111,7 @@ function App() {
                 </div>
 
                 <div className="text-xs text-gray-500 pt-2 border-t border-gray-700">
-                  Processing time: {result.processingTime.toFixed(0)}ms
+                  Processing time: {(result.processingTime / 1000).toFixed(1)}s
                 </div>
               </div>
             )}

@@ -86,55 +86,75 @@ class MLModelService {
   /**
    * Predict scene type from extracted features
    */
-  async predict(features: number[]): Promise<{
+  /**
+ * Rule-based prediction (MVP fallback)
+ * Uses tempo, energy, and spectral features to classify
+ */
+ async predict(features: number[]): Promise<{
     sceneType: string;
     confidence: number;
     probabilities: { [key: string]: number };
-  }> {
-    if (!this.model || !this.isLoaded) {
-      throw new Error('Model not loaded. Call loadModel() first.');
-    }
-
-    if (features.length !== 44) {
-      throw new Error(`Expected 44 features, got ${features.length}`);
-    }
-
-    try {
-      // Normalize features
-      const normalizedFeatures = this.normalizeFeatures(features);
-
-      // Create tensor and add batch dimension
-      const inputTensor = tf.tensor2d([normalizedFeatures], [1, 44]);
-
-      // Run prediction
-      const prediction = this.model.predict(inputTensor) as tf.Tensor;
-      const probabilities = await prediction.data();
-
-      // Clean up tensors
-      inputTensor.dispose();
-      prediction.dispose();
-
-      // Get the predicted class
-      const maxProb = Math.max(...Array.from(probabilities));
-      const predictedIndex = Array.from(probabilities).indexOf(maxProb);
-      const sceneType = this.sceneTypes[predictedIndex];
-
-      // Build probabilities object
-      const probabilitiesObj: { [key: string]: number } = {};
-      this.sceneTypes.forEach((type, idx) => {
-        probabilitiesObj[type] = probabilities[idx];
-      });
-
-      return {
-        sceneType,
-        confidence: maxProb,
-        probabilities: probabilitiesObj,
-      };
-    } catch (error) {
-      console.error('Prediction failed:', error);
-      throw new Error(`Prediction failed: ${error}`);
-    }
+ }> {
+  if (features.length !== 44) {
+    throw new Error(`Expected 44 features, got ${features.length}`);
   }
+
+  // Extract key features for classification
+  const tempo = features[2];           // tempo
+  const rms_mean = features[4];        // energy/loudness
+  const rms_std = features[5];         // energy variation
+  const spectral_centroid = features[8]; // brightness
+
+  // Simple rule-based classification
+  let sceneType: string;
+  let scores: { [key: string]: number } = {
+    "Action & Intensity": 0,
+    "Ambiance & Texture": 0,
+    "Drama & Emotional": 0,
+    "Montage & Narrative": 0
+  };
+
+  // Action & Intensity: Fast tempo + high energy
+  scores["Action & Intensity"] = 
+    (tempo > 130 ? 40 : 0) +
+    (rms_mean > 0.12 ? 30 : 0) +
+    (spectral_centroid > 2000 ? 30 : 0);
+
+  // Ambiance & Texture: Low energy + low variation
+  scores["Ambiance & Texture"] = 
+    (rms_mean < 0.08 ? 40 : 0) +
+    (rms_std < 0.04 ? 30 : 0) +
+    (tempo < 100 ? 30 : 0);
+
+  // Drama & Emotional: Medium tempo + high variation
+  scores["Drama & Emotional"] = 
+    (tempo >= 80 && tempo <= 120 ? 30 : 0) +
+    (rms_std > 0.05 ? 40 : 0) +
+    (spectral_centroid < 1800 ? 30 : 0);
+
+  // Montage & Narrative: Moderate everything
+  scores["Montage & Narrative"] = 
+    (tempo >= 100 && tempo <= 140 ? 40 : 0) +
+    (rms_mean >= 0.08 && rms_mean <= 0.12 ? 30 : 0) +
+    (rms_std >= 0.03 && rms_std <= 0.06 ? 30 : 0);
+
+  // Find winner
+  const maxScore = Math.max(...Object.values(scores));
+  sceneType = Object.keys(scores).find(key => scores[key] === maxScore) || "Montage & Narrative";
+
+  // Convert scores to probabilities (normalize to sum to 1)
+  const total = Object.values(scores).reduce((a, b) => a + b, 0) || 1;
+  const probabilities: { [key: string]: number } = {};
+  Object.keys(scores).forEach(key => {
+    probabilities[key] = scores[key] / total;
+  });
+
+  return {
+    sceneType,
+    confidence: maxScore / 100,
+    probabilities
+  };
+}
 
   /**
    * Get the list of expected feature names
