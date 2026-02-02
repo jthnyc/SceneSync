@@ -1,16 +1,23 @@
 import Meyda from "meyda";
 
+export interface FeatureTimeSeries {
+  rms: number[];
+  zcr: number[];
+  spectralCentroid: number[];
+  spectralRolloff: number[];
+  tempo: number;
+}
+
 /**
- * Extract all 44 audio features required by the SceneSync model
+ * Extract all 44 audio features and time-series arrays required by the SceneSync model
  * Matches the features from Python training pipeline
  */
 export const extractBrowserCompatibleFeatures = async (
   audioBuffer: AudioBuffer
-): Promise<number[]> => {
+): Promise<{ features: number[]; timeSeries: FeatureTimeSeries }> => {
   const sampleRate = audioBuffer.sampleRate;
-  const audioData = audioBuffer.getChannelData(0); // Use first channel (mono)
+  const audioData = audioBuffer.getChannelData(0);
   
-  // Use first 30 seconds (or full audio if shorter)
   const duration = Math.min(30, audioBuffer.duration);
   const sampleCount = Math.floor(duration * sampleRate);
   const signal = audioData.slice(0, sampleCount);
@@ -18,59 +25,64 @@ export const extractBrowserCompatibleFeatures = async (
   const features: number[] = [];
 
   try {
+    // Extract time-series data for visualization
+    const rms = extractFramedFeature(signal, sampleRate, 'rms');
+    const zcr = extractFramedFeature(signal, sampleRate, 'zcr');
+    const centroid = extractFramedFeature(signal, sampleRate, 'spectralCentroid');
+    const rolloff = extractFramedFeature(signal, sampleRate, 'spectralRolloff');
+    
+    // Calculate tempo
+    const tempo = estimateTempo(rms, sampleRate);
+
+    // Store time-series for graphs
+    const timeSeries: FeatureTimeSeries = {
+      rms,
+      zcr,
+      spectralCentroid: centroid,
+      spectralRolloff: rolloff,
+      tempo
+    };
+
     // 1. BASIC AUDIO PROPERTIES (4 features)
-    features.push(duration);                    // duration
-    features.push(sampleRate);                  // sample_rate
+    features.push(duration);
+    features.push(sampleRate);
+    features.push(tempo);
     
-    // Extract tempo using Meyda
-    const rmsFrames = extractFramedFeature(signal, sampleRate, 'rms');
-    const tempo = estimateTempo(rmsFrames, sampleRate);
-    features.push(tempo);                       // tempo
-    
-    // Beat count estimation (approximate)
     const beatCount = Math.round((tempo / 60) * duration);
-    features.push(beatCount);                   // beat_count
+    features.push(beatCount);
 
     // 2. ENERGY FEATURES (4 features)
-    const rms = extractFramedFeature(signal, sampleRate, 'rms');
-    features.push(mean(rms));                   // rms_mean
-    features.push(std(rms));                    // rms_std
-    features.push(Math.max(...rms));            // rms_max
-    
-    const zcr = extractFramedFeature(signal, sampleRate, 'zcr');
-    features.push(mean(zcr));                   // zcr_mean
+    features.push(mean(rms));
+    features.push(std(rms));
+    features.push(Math.max(...rms));
+    features.push(mean(zcr));
 
-    // 3. SPECTRAL FEATURES (6 features)
-    const centroid = extractFramedFeature(signal, sampleRate, 'spectralCentroid');
-    features.push(mean(centroid));              // spectral_centroid_mean
-    features.push(std(centroid));               // spectral_centroid_std
-    
-    const rolloff = extractFramedFeature(signal, sampleRate, 'spectralRolloff');
-    features.push(mean(rolloff));               // spectral_rolloff_mean
+    // 3. SPECTRAL FEATURES (4 features)
+    features.push(mean(centroid));
+    features.push(std(centroid));
+    features.push(mean(rolloff));
     
     const bandwidth = extractFramedFeature(signal, sampleRate, 'spectralSpread');
-    features.push(mean(bandwidth));             // spectral_bandwidth_mean
+    features.push(mean(bandwidth));
 
-    // 4. MFCCs (13 features: mfcc_0 to mfcc_12)
+    // 4-6. MFCCs, Spectral Contrast, Chroma (unchanged)
     const mfccs = extractMFCCs(signal, sampleRate);
     for (let i = 0; i < 13; i++) {
-      features.push(mean(mfccs[i]));            // mfcc_0 through mfcc_12
+      features.push(mean(mfccs[i]));
     }
 
-    // 5. SPECTRAL CONTRAST (7 features: contrast_0 to contrast_6)
     const spectralContrast = extractSpectralContrast(signal, sampleRate);
     for (let i = 0; i < 7; i++) {
-      features.push(mean(spectralContrast[i])); // contrast_0 through contrast_6
+      features.push(mean(spectralContrast[i]));
     }
 
-    // 6. CHROMA (12 features: chroma_0 to chroma_11)
     const chroma = extractChroma(signal, sampleRate);
     for (let i = 0; i < 12; i++) {
-      features.push(mean(chroma[i]));           // chroma_0 through chroma_11
+      features.push(mean(chroma[i]));
     }
 
     console.log(`✅ Extracted ${features.length} features`);
-    return features;
+    return { features, timeSeries };
 
   } catch (error) {
     console.error('Feature extraction failed:', error);
@@ -190,35 +202,41 @@ function extractChroma(signal: Float32Array, sampleRate: number): number[][] {
  * Estimate tempo from RMS energy
  */
 function estimateTempo(rmsFrames: number[], sampleRate: number): number {
-  // Simple onset detection based on RMS peaks
   const hopSize = 512;
   const frameRate = sampleRate / hopSize;
   
-  // Find peaks in RMS
-  const threshold = mean(rmsFrames) + std(rmsFrames);
+  const threshold = mean(rmsFrames) + 0.3 * std(rmsFrames);
+  const minSpacing = Math.floor(0.2 * frameRate);
   const onsets: number[] = [];
   
-  for (let i = 1; i < rmsFrames.length - 1; i++) {
+  for (let i = minSpacing; i < rmsFrames.length - 1; i++) {
     if (rmsFrames[i] > threshold && 
         rmsFrames[i] > rmsFrames[i - 1] && 
-        rmsFrames[i] > rmsFrames[i + 1]) {
+        rmsFrames[i] > rmsFrames[i + 1] &&
+        (onsets.length === 0 || i - onsets[onsets.length - 1] > minSpacing)) {
       onsets.push(i);
     }
   }
 
-  if (onsets.length < 2) return 120; // Default tempo
+  if (onsets.length < 2) return 120;
 
-  // Calculate average time between onsets
+  // Use autocorrelation to find periodicity
   const intervals: number[] = [];
   for (let i = 1; i < onsets.length; i++) {
     intervals.push(onsets[i] - onsets[i - 1]);
   }
 
-  const avgInterval = mean(intervals);
-  const tempo = (60 * frameRate) / avgInterval;
+  // Find median interval (more robust than mean)
+  intervals.sort((a, b) => a - b);
+  const medianInterval = intervals[Math.floor(intervals.length / 2)];
+  
+  let tempo = (60 * frameRate) / medianInterval;
 
-  // Clamp to reasonable range
-  return Math.max(60, Math.min(200, tempo));
+  // Handle tempo doubling/halving - prefer 80-160 BPM range
+  while (tempo > 180) tempo /= 2;
+  while (tempo < 80) tempo *= 2;
+
+  return Math.max(60, Math.min(200, Math.round(tempo)));
 }
 
 /**
