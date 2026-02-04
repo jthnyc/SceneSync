@@ -10,6 +10,7 @@ import './index.css';
 interface TrackHistory {
   id: string;
   fileName: string;
+  fileSize: number;
   timestamp: number;
   result: PredictionResult;
 }
@@ -22,7 +23,8 @@ function App() {
     result, 
     initializeModel, 
     predictSceneType,
-    isModelLoaded 
+    isModelLoaded,
+    progressState
   } = useScenePrediction();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -36,16 +38,18 @@ function App() {
     ? trackHistory.find(t => t.id === selectedTrackId)?.result ?? undefined
     : result ?? undefined;
 
-  // Trigger fade-in animation when displayResult changes
+  // Only trigger fade-in animation when new prediction completes
   useEffect(() => {
-    if (displayResult) {
+    if (result && !selectedTrackId) {
       setShowResults(false);
       const timer = setTimeout(() => setShowResults(true), 10);
       return () => clearTimeout(timer);
-    } else {
+    } else if (!displayResult) {
       setShowResults(false);
+    } else if (selectedTrackId) {
+      setShowResults(true);
     }
-  }, [displayResult]);
+  }, [result, selectedTrackId, displayResult]);
 
   // Initialize model and load descriptions on mount
   useEffect(() => {
@@ -77,6 +81,7 @@ function App() {
       const newTrack: TrackHistory = {
         id: Date.now().toString(),
         fileName: selectedFile.name,
+        fileSize: selectedFile.size,
         timestamp: Date.now(),
         result: result
       };
@@ -199,7 +204,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-4 sm:p-8">
       <Toaster
         position="top-right"
         toastOptions={{
@@ -217,7 +222,7 @@ function App() {
           },
         }}
       />
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto w-full">
         <Header />
         
         <ModelStatus
@@ -227,7 +232,7 @@ function App() {
           onRetry={handleRetryModelInit}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <Sidebar
             displayResult={displayResult}
             isPredicting={isPredicting}
@@ -235,6 +240,8 @@ function App() {
             selectedTrackId={selectedTrackId}
             sceneDescriptions={sceneDescriptions}
             showResults={showResults}
+            progress={progressState.progress}
+            progressStage={progressState.stage}  
             onSelectTrack={handleSelectTrack}
             onRemoveTrack={removeTrack}
             onClearAll={clearAllTracks}
