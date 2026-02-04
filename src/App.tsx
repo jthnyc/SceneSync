@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useScenePrediction, PredictionResult } from './hooks/useScenePrediction';
-import Header from './components/Header';
-import ModelStatus from './components/ModelStatus';
-import Sidebar from './components/Sidebar';
-import MainContent from './components/MainContent';
+import { validateAudioFile } from './utils/fileValidation';
+import {
+  Header,
+  ModelStatus,
+  Sidebar,
+  MainContent,
+} from './components';
 import './index.css';
 
 interface TrackHistory {
@@ -16,15 +19,17 @@ interface TrackHistory {
 }
 
 function App() {
-  const { 
-    isLoading, 
-    isPredicting, 
-    error, 
-    result, 
-    initializeModel, 
+  const {
+    isLoading,
+    isPredicting,
+    error,
+    result,
+    initializeModel,
     predictSceneType,
     isModelLoaded,
-    progressState
+    progressState,
+    clearError,
+    retryPrediction,
   } = useScenePrediction();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -66,11 +71,11 @@ function App() {
     init();
   }, [initializeModel]);
 
-  // Show error toast when error occurs
+  // Show error toast when model loading fails
   useEffect(() => {
-    if (error) {
-      toast.error('Failed to load model. Please try again.', {
-        duration: 4000,
+    if (error && error.type === 'model') {
+      toast.error(error.message, {
+        duration: 5000,
       });
     }
   }, [error]);
@@ -110,21 +115,40 @@ function App() {
     localStorage.setItem('sceneSync_trackHistory', JSON.stringify(trackHistory));
   }, [trackHistory]);
 
-  // File upload handler
+  // File upload handler with validation
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const existingTrack = trackHistory.find(
-      track => track.fileName === file.name && track.result
-    );
+    // Validate file before processing
+    const validation = validateAudioFile(file);
+    
+    if (!validation.isValid) {
+      toast.error(validation.error || 'Invalid file', {
+        duration: 5000,
+      });
+      // Reset input so same file can be selected again
+      e.target.value = '';
+      return;
+    }
 
-    if (existingTrack) {
-      setSelectedTrackId(existingTrack.id);
-      setSelectedFile(null);
-      toast('Track already analyzed! Showing previous results.', {
-        icon: '📊',
-        duration: 3000,
+    setSelectedFile(file);
+    setSelectedTrackId(null);
+    await predictSceneType(file);
+  };
+
+  // Drag and drop handler with validation
+  const handleFileDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    // Validate file before processing
+    const validation = validateAudioFile(file);
+    
+    if (!validation.isValid) {
+      toast.error(validation.error || 'Invalid file', {
+        duration: 5000,
       });
       return;
     }
@@ -134,30 +158,10 @@ function App() {
     await predictSceneType(file);
   };
 
-  // Drag and drop handler
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('audio/')) {
-      const existingTrack = trackHistory.find(
-        track => track.fileName === file.name && track.result
-      );
-
-      if (existingTrack) {
-        setSelectedTrackId(existingTrack.id);
-        setSelectedFile(null);
-        toast('Track already analyzed! Showing previous results.', {
-          icon: '📊',
-          duration: 3000,
-        });
-        return;
-      }
-
-      setSelectedFile(file);
-      setSelectedTrackId(null);
-      await predictSceneType(file);
+  // Retry prediction after error
+  const handleRetry = () => {
+    if (selectedFile) {
+      retryPrediction(selectedFile);
     }
   };
 
@@ -165,6 +169,7 @@ function App() {
   const handleClearFile = () => {
     setSelectedFile(null);
     setSelectedTrackId(null);
+    clearError(); // Clear any errors when clearing file
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
   };
@@ -173,6 +178,7 @@ function App() {
   const handleSelectTrack = (id: string) => {
     setSelectedTrackId(id);
     setSelectedFile(null);
+    clearError(); // Clear errors when switching tracks
   };
 
   // Remove track handler
@@ -193,6 +199,7 @@ function App() {
     setTrackHistory([]);
     setSelectedTrackId(null);
     setSelectedFile(null);
+    clearError(); // Clear errors when clearing all
     toast.success(`Cleared ${count} track${count !== 1 ? 's' : ''}`, {
       duration: 2000,
     });
@@ -220,6 +227,12 @@ function App() {
               secondary: '#fff',
             },
           },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
         }}
       />
       <div className="max-w-6xl mx-auto w-full">
@@ -228,7 +241,7 @@ function App() {
         <ModelStatus
           isLoading={isLoading}
           isModelLoaded={isModelLoaded}
-          error={error}
+          error={error?.message ?? null}
           onRetry={handleRetryModelInit}
         />
 
@@ -257,8 +270,11 @@ function App() {
             hasError={error !== null && !isModelLoaded}
             showResults={showResults}
             onFileChange={handleFileChange}
-            onFileDrop={handleDrop}
+            onFileDrop={handleFileDrop}
             onClearFile={handleClearFile}
+            error={error}
+            onRetry={handleRetry}
+            onDismissError={clearError}
           />
         </div>
 

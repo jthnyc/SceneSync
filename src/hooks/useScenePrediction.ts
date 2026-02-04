@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { mlModelService } from '../services/mlModelService';
 import { extractBrowserCompatibleFeatures, FeatureTimeSeries } from '../utils/featureExtraction';
+import { getErrorMessage } from '../utils/fileValidation';
 
 export interface PredictionResult {
   sceneType: string;
@@ -17,13 +18,21 @@ export interface ProgressState {
   stage: string;
 }
 
+export type ErrorType = 'model' | 'audio' | 'network' | 'validation' | 'unknown';
+
+export interface ErrorState {
+  message: string;
+  type: ErrorType;
+  canRetry: boolean;
+}
+
 // Helper to add small delay for UI updates
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const useScenePrediction = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPredicting, setIsPredicting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorState | null>(null);
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [progressState, setProgressState] = useState<ProgressState>({ progress: 0, stage: '' });
@@ -36,7 +45,12 @@ export const useScenePrediction = () => {
       await mlModelService.loadModel('/models');
       setIsModelLoaded(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load model');
+      const errorMessage = getErrorMessage(err instanceof Error ? err : String(err));
+      setError({
+        message: errorMessage,
+        type: 'model',
+        canRetry: true,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +58,11 @@ export const useScenePrediction = () => {
 
   const predictSceneType = useCallback(async (audioFile: File) => {
     if (!isModelLoaded) {
-      setError('Model not loaded');
+      setError({
+        message: 'AI model not loaded. Please wait or refresh the page.',
+        type: 'model',
+        canRetry: false,
+      });
       return;
     }
 
@@ -57,24 +75,59 @@ export const useScenePrediction = () => {
       // Stage 1: Load audio file
       setProgressState({ progress: 10, stage: 'Loading audio...' });
       await delay(100);
-      const arrayBuffer = await audioFile.arrayBuffer();
+      
+      let arrayBuffer: ArrayBuffer;
+      try {
+        arrayBuffer = await audioFile.arrayBuffer();
+      } catch (err) {
+        throw new Error('Failed to read audio file. The file may be corrupted.');
+      }
       
       // Stage 2: Decode audio
       setProgressState({ progress: 20, stage: 'Decoding audio...' });
       await delay(150);
-      const audioContext = new AudioContext();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      
+      let audioContext: AudioContext;
+      let audioBuffer: AudioBuffer;
+      try {
+        audioContext = new AudioContext();
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      } catch (err) {
+        throw new Error('Failed to decode audio. Please ensure the file is a valid audio format.');
+      }
+      
+      // Capture audio duration
       const audioDuration = audioBuffer.duration;
+
+      // Validate audio duration
+      if (audioDuration === 0 || !isFinite(audioDuration)) {
+        throw new Error('Audio file appears to be empty or corrupted.');
+      }
 
       // Stage 3: Extract features
       setProgressState({ progress: 40, stage: 'Extracting features...' });
       await delay(200);
-      const { features, timeSeries } = await extractBrowserCompatibleFeatures(audioBuffer);
+      
+      let features: number[];
+      let timeSeries: FeatureTimeSeries;
+      try {
+        const result = await extractBrowserCompatibleFeatures(audioBuffer);
+        features = result.features;
+        timeSeries = result.timeSeries;
+      } catch (err) {
+        throw new Error('Failed to analyze audio features. The audio format may not be supported.');
+      }
 
       // Stage 4: Classify scene
       setProgressState({ progress: 80, stage: 'Classifying scene...' });
       await delay(150);
-      const prediction = await mlModelService.predict(features);
+      
+      let prediction: any;
+      try {
+        prediction = await mlModelService.predict(features);
+      } catch (err) {
+        throw new Error('AI classification failed. Please try again.');
+      }
 
       // Complete
       setProgressState({ progress: 100, stage: 'Complete!' });
@@ -87,10 +140,30 @@ export const useScenePrediction = () => {
         features,
         timeSeries,
         processingTime,
-        audioDuration
+        audioDuration,
       });
+
+      // Clear any previous errors
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Prediction failed');
+      const errorMessage = getErrorMessage(err instanceof Error ? err : String(err));
+      
+      // Determine error type
+      let errorType: ErrorType = 'unknown';
+      const errStr = String(err);
+      if (errStr.includes('decode') || errStr.includes('format')) {
+        errorType = 'audio';
+      } else if (errStr.includes('network') || errStr.includes('fetch')) {
+        errorType = 'network';
+      } else if (errStr.includes('feature') || errStr.includes('extract')) {
+        errorType = 'audio';
+      }
+
+      setError({
+        message: errorMessage,
+        type: errorType,
+        canRetry: true,
+      });
     } finally {
       setIsPredicting(false);
       // Reset progress after a brief delay
@@ -99,6 +172,15 @@ export const useScenePrediction = () => {
       }, 300);
     }
   }, [isModelLoaded]);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  const retryPrediction = useCallback((audioFile: File) => {
+    clearError();
+    predictSceneType(audioFile);
+  }, [clearError, predictSceneType]);
 
   return {
     isLoading,
@@ -109,5 +191,7 @@ export const useScenePrediction = () => {
     predictSceneType,
     isModelLoaded,
     progressState,
+    clearError,
+    retryPrediction,
   };
 };

@@ -4,6 +4,8 @@ import UploadZone from './UploadZone';
 import { FeatureVisualizations } from './FeatureVisualizations';
 import { SkeletonCard } from './Skeleton';
 import { Clock, Target } from 'lucide-react';
+import ErrorDisplay from './ErrorDisplay';
+import type { ErrorState } from '../hooks/useScenePrediction';
 
 interface Track {
   id: string;
@@ -21,10 +23,13 @@ interface MainContentProps {
   isPredicting: boolean;
   isLoading: boolean;
   hasError: boolean;
+  error: ErrorState | null;
   showResults: boolean;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFileDrop: (e: React.DragEvent) => void;
   onClearFile: () => void;
+  onRetry?: () => void;
+  onDismissError?: () => void;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -35,10 +40,13 @@ const MainContent: React.FC<MainContentProps> = ({
   isPredicting,
   isLoading,
   hasError,
+  error,
   showResults,
   onFileChange,
   onFileDrop,
   onClearFile,
+  onRetry,
+  onDismissError,
 }) => {
   // Format file size
   const formatFileSize = (bytes: number) => {
@@ -72,8 +80,22 @@ const MainContent: React.FC<MainContentProps> = ({
         hasError={hasError}
       />
 
+      {/* Error Display */}
+      {error && (
+        <div className="mt-4">
+          <ErrorDisplay
+            message={error.message}
+            type={error.type}
+            severity="error"
+            canRetry={error.canRetry}
+            onRetry={onRetry}
+            onDismiss={onDismissError}
+          />
+        </div>
+      )}
+
       {/* Current File Info */}
-      {selectedFile && (
+      {selectedFile && !error && (
         <div className="mt-4 bg-gray-700/30 p-4 rounded-lg">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -90,21 +112,30 @@ const MainContent: React.FC<MainContentProps> = ({
                 {/* File metadata */}
                 {displayResult?.audioDuration && (
                   <div className="flex items-center gap-3 text-sm flex-shrink-0">
+                    <span className="text-gray-400">{formatFileSize(selectedFile.size)}</span>
+                    <span className="text-gray-600">•</span>
                     <span className="text-white font-medium">
                       {formatDuration(displayResult.audioDuration)}
                     </span>
-                    <span className="text-white">•</span>
-                    <span className="text-white">{formatFileSize(selectedFile.size)}</span>
                   </div>
                 )}
               </div>
             </div>
+            
+            {!isPredicting && (
+              <button
+                onClick={onClearFile}
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors flex-shrink-0"
+              >
+                Clear
+              </button>
+            )}
           </div>
         </div>
       )}
 
       {/* Viewing from history */}
-      {selectedTrackId && !selectedFile && currentTrack && (
+      {selectedTrackId && !selectedFile && currentTrack && !error && (
         <div className="mt-4 bg-gray-700/30 p-4 rounded-lg">
           <div className="text-sm text-gray-400 mb-1">Viewing from history</div>
           
@@ -129,7 +160,7 @@ const MainContent: React.FC<MainContentProps> = ({
       )}
 
       {/* Stats - Only 2 cards: Processing Time & Confidence */}
-      {displayResult && !isPredicting && (
+      {displayResult && !isPredicting && !error && (
         <div 
           className={`
             mt-6 grid grid-cols-2 gap-3 sm:gap-4
@@ -171,7 +202,7 @@ const MainContent: React.FC<MainContentProps> = ({
       )}
 
       {/* Visualizations - Actual charts */}
-      {displayResult && !isPredicting && (
+      {displayResult && !isPredicting && !error && (
         <div 
           className={`
             mt-6 transition-all duration-200 ease-out
