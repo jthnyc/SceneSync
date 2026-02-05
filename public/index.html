@@ -2,36 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    
+    <!-- App Icons -->
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#3b82f6" />
     
-    <!-- Primary Meta Tags -->
-    <title>SceneSync - AI Film Music Scene Classifier</title>
-    <meta name="title" content="SceneSync - AI Film Music Scene Classifier" />
-    <meta name="description" content="Analyze audio tracks and classify them into cinematic scene types using AI-powered feature extraction. Supports MP3, WAV, and M4A files." />
-    <meta name="keywords" content="audio analysis, scene classification, film music, AI classifier, audio features, music analysis" />
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="SceneSync - AI-powered film music scene classifier. Analyze audio tracks and automatically identify scene types for film scoring and music production." />
+    <meta name="keywords" content="film music, scene classifier, AI audio analysis, music production, film scoring, scene detection, audio classification" />
     <meta name="author" content="SceneSync" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <!-- <meta property="og:url" content="https://scenesync.app/" /> -->
+    <meta property="og:url" content="https://scenesync.app/" />
     <meta property="og:title" content="SceneSync - AI Film Music Scene Classifier" />
-    <meta property="og:description" content="Analyze audio tracks and classify them into cinematic scene types using AI-powered feature extraction." />
-    <meta property="og:image" content="%PUBLIC_URL%/og-image.png" />
+    <meta property="og:description" content="Analyze audio tracks and automatically identify scene types for film scoring with AI-powered classification." />
+    <meta property="og:image" content="%PUBLIC_URL%/logo512.png" />
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://scenesync.app/" />
     <meta property="twitter:title" content="SceneSync - AI Film Music Scene Classifier" />
-    <meta property="twitter:description" content="Analyze audio tracks and classify them into cinematic scene types using AI-powered feature extraction." />
-    <meta property="twitter:image" content="%PUBLIC_URL%/og-image.png" />
+    <meta property="twitter:description" content="Analyze audio tracks and automatically identify scene types for film scoring with AI-powered classification." />
+    <meta property="twitter:image" content="%PUBLIC_URL%/logo512.png" />
     
-    <!-- Icons -->
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!-- PWA Manifest -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     
-    <!-- Accessibility: Skip to main content -->
+    <!-- Skip Link for Accessibility -->
     <style>
       .skip-link {
         position: absolute;
@@ -39,28 +43,20 @@
         left: 0;
         background: #3b82f6;
         color: white;
-        padding: 8px 16px;
+        padding: 8px;
         text-decoration: none;
-        border-radius: 0 0 4px 0;
         z-index: 100;
-        font-family: system-ui, -apple-system, sans-serif;
       }
       .skip-link:focus {
         top: 0;
       }
     </style>
+    
+    <title>SceneSync - AI Film Music Scene Classifier</title>
   </head>
   <body>
-    <!-- Skip link for keyboard navigation -->
+    <noscript>SceneSync requires JavaScript to run. Please enable JavaScript in your browser.</noscript>
     <a href="#root" class="skip-link">Skip to main content</a>
-    
-    <noscript>
-      <div style="padding: 20px; text-align: center; font-family: system-ui, -apple-system, sans-serif;">
-        <h1>JavaScript Required</h1>
-        <p>SceneSync requires JavaScript to run. Please enable JavaScript in your browser settings to use this application.</p>
-      </div>
-    </noscript>
-    
     <div id="root"></div>
   </body>
 </html>

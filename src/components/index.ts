@@ -12,5 +12,6 @@ export { default as EmptyState } from './EmptyState';
 export { default as ProgressIndicator } from './ProgressIndicator';
 export { FeatureVisualizations } from './FeatureVisualizations';
 export { Skeleton, SkeletonText, SkeletonCard } from './Skeleton';
+export { default as AudioPlayer } from './AudioPlayer';
 
 // Note: Toast is intentionally not exported here since using react-hot-toast

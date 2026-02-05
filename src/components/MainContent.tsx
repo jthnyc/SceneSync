@@ -1,10 +1,14 @@
 import React from 'react';
 import { PredictionResult } from '../hooks/useScenePrediction';
-import UploadZone from './UploadZone';
-import { FeatureVisualizations } from './FeatureVisualizations';
-import { SkeletonCard } from './Skeleton';
 import { Clock, Target } from 'lucide-react';
-import ErrorDisplay from './ErrorDisplay';
+import { formatFileSize, formatDuration } from '../utils/formatUtils';
+import {
+  UploadZone,
+  FeatureVisualizations,
+  SkeletonCard,
+  ErrorDisplay,
+  AudioPlayer,
+} from './';
 import type { ErrorState } from '../hooks/useScenePrediction';
 
 interface Track {
@@ -48,21 +52,6 @@ const MainContent: React.FC<MainContentProps> = ({
   onRetry,
   onDismissError,
 }) => {
-  // Format file size
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  };
-
-  // Format audio duration
-  const formatDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Get current track info (for viewing from history)
   const currentTrack = selectedTrackId 
     ? trackHistory.find(t => t.id === selectedTrackId)
     : null;
@@ -94,61 +83,31 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Current File Info */}
-      {selectedFile && !error && (
-        <div className="mt-4 bg-gray-700/30 p-4 rounded-lg">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="text-sm text-gray-400 mb-1">
-                {isPredicting ? 'Analyzing' : 'Current file'}
-              </div>
-              
-              {/* Desktop: filename and metadata on same row */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div className="text-white font-medium truncate">
-                  {selectedFile.name}
-                </div>
-                
-                {/* File metadata */}
-                {displayResult?.audioDuration && (
-                  <div className="flex items-center gap-3 text-sm flex-shrink-0">
-                    <span className="text-gray-400">{formatFileSize(selectedFile.size)}</span>
-                    <span className="text-gray-600">•</span>
-                    <span className="text-white font-medium">
-                      {formatDuration(displayResult.audioDuration)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {!isPredicting && (
-              <button
-                onClick={onClearFile}
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors flex-shrink-0"
-              >
-                Clear
-              </button>
-            )}
-          </div>
+      {/* Audio Player - Handles all file info display when shown */}
+      {selectedFile && !error && !isPredicting && (
+        <div className="mt-4">
+          <AudioPlayer
+            audioFile={selectedFile}
+            fileName={selectedFile.name}
+            fileSize={selectedFile.size}
+            onClear={onClearFile}
+          />
         </div>
       )}
 
-      {/* Viewing from history */}
-      {selectedTrackId && !selectedFile && currentTrack && !error && (
+      {/* Show basic file info while predicting (no player) */}
+      {selectedFile && !error && isPredicting && (
         <div className="mt-4 bg-gray-700/30 p-4 rounded-lg">
-          <div className="text-sm text-gray-400 mb-1">Viewing from history</div>
+          <div className="text-sm text-gray-400 mb-1">Analyzing</div>
           
-          {/* Desktop: filename and metadata on same row */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="text-white font-medium truncate">
-              {currentTrack.fileName}
+              {selectedFile.name}
             </div>
             
-            {/* File metadata */}
             {displayResult?.audioDuration && (
               <div className="flex items-center gap-3 text-sm flex-shrink-0">
-                <span className="text-gray-400">{formatFileSize(currentTrack.fileSize)}</span>
+                <span className="text-gray-400">{formatFileSize(selectedFile.size)}</span>
                 <span className="text-gray-600">•</span>
                 <span className="text-white font-medium">
                   {formatDuration(displayResult.audioDuration)}
@@ -159,7 +118,38 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Stats - Only 2 cards: Processing Time & Confidence */}
+      {/* Viewing from history (no player available) */}
+      {selectedTrackId && !selectedFile && currentTrack && !error && (
+        <div className="mt-4 space-y-3">
+          <div className="bg-gray-700/30 p-4 rounded-lg">
+            <div className="text-sm text-gray-400 mb-1">Viewing from history</div>
+            
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="text-white font-medium truncate">
+                {currentTrack.fileName}
+              </div>
+              
+              {displayResult?.audioDuration && (
+                <div className="flex items-center gap-3 text-sm flex-shrink-0">
+                  <span className="text-gray-400">{formatFileSize(currentTrack.fileSize)}</span>
+                  <span className="text-gray-600">•</span>
+                  <span className="text-white font-medium">
+                    {formatDuration(displayResult.audioDuration)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-gray-700/30 p-4 rounded-lg border border-gray-600">
+            <div className="text-sm text-gray-400">
+              💡 To play this track again, re-upload the file
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stats */}
       {displayResult && !isPredicting && !error && (
         <div 
           className={`
@@ -168,7 +158,6 @@ const MainContent: React.FC<MainContentProps> = ({
             ${showResults ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
           `}
         >
-          {/* Processing Time */}
           <div className="bg-gray-700/30 p-3 sm:p-4 rounded-lg">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="text-blue-400" size={16} />
@@ -179,7 +168,6 @@ const MainContent: React.FC<MainContentProps> = ({
             </div>
           </div>
 
-          {/* Confidence */}
           <div className="bg-gray-700/30 p-3 sm:p-4 rounded-lg">
             <div className="flex items-center gap-2 mb-1">
               <Target className="text-green-400" size={16} />
