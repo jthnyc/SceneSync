@@ -1,29 +1,20 @@
 import React from 'react';
-import TrackHistoryItem from './TrackHistoryItem';
-
-interface Track {
-  id: string;
-  fileName: string;
-  fileSize: number;
-  timestamp: number;
-  result: {
-    sceneType: string;
-  };
-}
+import { TrackHistoryItem } from './TrackHistoryItem';
+import type { AnalyzedTrack } from '../types/audio';
 
 interface TrackHistoryProps {
-  tracks: Track[];
-  selectedTrackId: string | null;
-  onSelectTrack: (id: string) => void;
-  onRemoveTrack: (id: string) => void;
+  tracks: AnalyzedTrack[];
+  selectedTrackId: string | null;  // Changed back from activeTrackId
+  onSelectTrack: (id: string) => void;  // Changed back from onPlayTrack
+  onRemoveTrack: (id: string) => void;  // Changed back from onDeleteTrack
   onClearAll: () => void;
 }
 
 const TrackHistory: React.FC<TrackHistoryProps> = ({
   tracks,
-  selectedTrackId,
-  onSelectTrack,
-  onRemoveTrack,
+  selectedTrackId,  // Changed back
+  onSelectTrack,    // Changed back
+  onRemoveTrack,    // Changed back
   onClearAll,
 }) => {
   if (tracks.length === 0) {
@@ -59,13 +50,10 @@ const TrackHistory: React.FC<TrackHistoryProps> = ({
         {tracks.map((track) => (
           <li key={track.id}>
             <TrackHistoryItem
-              id={track.id}
-              fileName={track.fileName}
-              sceneType={track.result.sceneType}
-              timestamp={track.timestamp}
+              track={track}
               isSelected={selectedTrackId === track.id}
-              onSelect={() => onSelectTrack(track.id)}
-              onRemove={() => onRemoveTrack(track.id)}
+              onSelect={onSelectTrack}
+              onRemove={onRemoveTrack}
             />
           </li>
         ))}

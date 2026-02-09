@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PredictionResult } from '../hooks/useScenePrediction';
 import { Clock, Target } from 'lucide-react';
 import { formatFileSize, formatDuration } from '../utils/formatUtils';
+import { audioStorage } from '../services/audioStorageService';
 import {
   UploadZone,
   FeatureVisualizations,
@@ -10,19 +11,12 @@ import {
   AudioPlayer,
 } from './';
 import type { ErrorState } from '../hooks/useScenePrediction';
-
-interface Track {
-  id: string;
-  fileName: string;
-  fileSize: number;
-  timestamp: number;
-  result: PredictionResult;
-}
+import type { AnalyzedTrack } from '../types/audio';
 
 interface MainContentProps {
   selectedFile: File | null;
   selectedTrackId: string | null;
-  trackHistory: Track[];
+  trackHistory: AnalyzedTrack[];
   displayResult: PredictionResult | undefined;
   isPredicting: boolean;
   isLoading: boolean;
@@ -52,9 +46,36 @@ const MainContent: React.FC<MainContentProps> = ({
   onRetry,
   onDismissError,
 }) => {
+  const [historyAudioFile, setHistoryAudioFile] = useState<File | null>(null);
+  const [loadingHistoryAudio, setLoadingHistoryAudio] = useState(false);
+
   const currentTrack = selectedTrackId 
     ? trackHistory.find(t => t.id === selectedTrackId)
     : null;
+
+  // Load audio from IndexedDB when viewing from history
+  useEffect(() => {
+    if (selectedTrackId && !selectedFile && currentTrack?.hasStoredAudio) {
+      setLoadingHistoryAudio(true);
+      audioStorage.getAudioFile(selectedTrackId)
+        .then((file) => {
+          if (file) {
+            setHistoryAudioFile(file);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load audio from storage:', err);
+        })
+        .finally(() => {
+          setLoadingHistoryAudio(false);
+        });
+    } else {
+      setHistoryAudioFile(null);
+    }
+  }, [selectedTrackId, selectedFile, currentTrack]);
+
+  // Determine which file to show in player
+  // const audioFileToPlay = selectedFile || historyAudioFile;
 
   return (
     <div className="lg:col-span-2 bg-gray-800/50 p-4 sm:p-6 rounded-xl border border-gray-700">
@@ -83,7 +104,7 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Audio Player - Handles all file info display when shown */}
+      {/* Audio Player - Newly uploaded file */}
       {selectedFile && !error && !isPredicting && (
         <div className="mt-4">
           <AudioPlayer
@@ -92,6 +113,28 @@ const MainContent: React.FC<MainContentProps> = ({
             fileSize={selectedFile.size}
             onClear={onClearFile}
           />
+        </div>
+      )}
+
+      {/* Audio Player - From history (loaded from IndexedDB) */}
+      {!selectedFile && historyAudioFile && currentTrack && !error && !isPredicting && (
+        <div className="mt-4">
+          <AudioPlayer
+            audioFile={historyAudioFile}
+            fileName={currentTrack.fileName}
+            fileSize={currentTrack.fileSize}
+            onClear={onClearFile}
+          />
+        </div>
+      )}
+
+      {/* Loading state for history audio */}
+      {loadingHistoryAudio && !selectedFile && (
+        <div className="mt-4 bg-gray-700/30 p-4 rounded-lg">
+          <div className="text-sm text-gray-400 mb-2">Loading audio from storage...</div>
+          <div className="w-full bg-gray-700 rounded-full h-2">
+            <div className="bg-blue-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }} />
+          </div>
         </div>
       )}
 
@@ -118,8 +161,8 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Viewing from history (no player available) */}
-      {selectedTrackId && !selectedFile && currentTrack && !error && (
+      {/* Viewing from history - file not available in storage */}
+      {selectedTrackId && !selectedFile && !historyAudioFile && !loadingHistoryAudio && currentTrack && !error && (
         <div className="mt-4 space-y-3">
           <div className="bg-gray-700/30 p-4 rounded-lg">
             <div className="text-sm text-gray-400 mb-1">Viewing from history</div>
@@ -141,9 +184,9 @@ const MainContent: React.FC<MainContentProps> = ({
             </div>
           </div>
 
-          <div className="bg-gray-700/30 p-4 rounded-lg border border-gray-600">
-            <div className="text-sm text-gray-400">
-              💡 To play this track again, re-upload the file
+          <div className="bg-amber-900/20 p-4 rounded-lg border border-amber-700/50">
+            <div className="text-sm text-amber-200">
+              ⚠️ Audio file not available in storage. Re-upload to play this track.
             </div>
           </div>
         </div>

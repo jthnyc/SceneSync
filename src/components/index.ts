@@ -7,11 +7,12 @@ export { default as ErrorDisplay } from './ErrorDisplay';
 export { default as UploadZone } from './UploadZone';
 export { default as PredictionResults } from './PredictionResults';
 export { default as TrackHistory } from './TrackHistory';
-export { default as TrackHistoryItem } from './TrackHistoryItem';
+export { TrackHistoryItem } from './TrackHistoryItem';
 export { default as EmptyState } from './EmptyState';
 export { default as ProgressIndicator } from './ProgressIndicator';
 export { FeatureVisualizations } from './FeatureVisualizations';
 export { Skeleton, SkeletonText, SkeletonCard } from './Skeleton';
 export { default as AudioPlayer } from './AudioPlayer';
+export { PrivacyNotice } from './PrivacyNotice';
 
 // Note: Toast is intentionally not exported here since using react-hot-toast

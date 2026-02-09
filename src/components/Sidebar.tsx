@@ -1,23 +1,16 @@
 import React, { useEffect, useRef } from 'react';
-import { PredictionResult } from '../hooks/useScenePrediction';
+import type { AnalyzedTrack, PredictionResult } from '../types/audio';
 import PredictionResults from './PredictionResults';
 import TrackHistory from './TrackHistory';
 import EmptyState from './EmptyState';
 import ProgressIndicator from './ProgressIndicator';
 import { Skeleton, SkeletonText } from './Skeleton';
-
-interface Track {
-  id: string;
-  fileName: string;
-  fileSize: number;
-  timestamp: number;
-  result: PredictionResult;
-}
+import { StorageInfo } from './PrivacyNotice';
 
 interface SidebarProps {
   displayResult: PredictionResult | undefined;
   isPredicting: boolean;
-  trackHistory: Track[];
+  trackHistory: AnalyzedTrack[];
   selectedTrackId: string | null;
   sceneDescriptions: { [key: string]: string };
   showResults: boolean;
@@ -26,6 +19,7 @@ interface SidebarProps {
   onSelectTrack: (id: string) => void;
   onRemoveTrack: (id: string) => void;
   onClearAll: () => void;
+  storageStats: { count: number; size: number };
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -40,6 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSelectTrack,
   onRemoveTrack,
   onClearAll,
+  storageStats,
 }) => {
   const announcementRef = useRef<HTMLDivElement>(null);
 
@@ -99,6 +94,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           />
         </div>
       )}
+
+      {/* Storage Info */}
+      <StorageInfo
+        fileCount={storageStats.count}
+        totalSize={storageStats.size}
+        onClear={onClearAll}
+      />
 
       {/* Track History */}
       <TrackHistory

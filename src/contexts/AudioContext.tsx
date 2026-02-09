@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { AudioFile, AudioFeatures } from '../types/audio';
+import type { AudioFile, AudioFeatures } from '../types';
 
 interface AudioContextType {
   audioFiles: AudioFile[];
