@@ -100,6 +100,13 @@ export function TrackHistoryItem({
         <div className={`text-xs ${isSelected ? 'text-gray-600' : 'text-gray-500'}`}>
           {new Date(track.analyzedAt).toLocaleString()}
         </div>
+
+        {/* Unsaved indicator — shown when blob failed to write to IDB */}
+        {!track.hasStoredAudio && (
+          <p className="text-xs text-amber-500 mt-1">
+            Not saved · won't be available after refresh
+          </p>
+        )}
       </div>
     </div>
   );

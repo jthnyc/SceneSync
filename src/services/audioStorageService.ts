@@ -67,15 +67,21 @@ class AudioStorageService {
       request.onerror = () => reject(new Error('Failed to stage track write'));
 
       // transaction.oncomplete is the only guarantee the blob is on disk
-      transaction.oncomplete = () => resolve();
+      transaction.oncomplete = () => {
+        console.log('[IDB] transaction committed, entry size approx:', storedTrack.audioBlob.size);
+        resolve();
+      }
 
       // transaction.onerror catches commit failures (quota exceeded, etc.)
       // Previously unhandled — this is why quota errors were silent
-      transaction.onerror = () =>
+      transaction.onerror = () => {
+        console.error('[IDB] transaction error: ', transaction.error);
         reject(new Error(`Failed to store track: ${transaction.error?.message ?? 'unknown error'}`));
-
-      transaction.onabort = () =>
+      }
+      transaction.onabort = () => {
+        console.error('[IDB] transaction aborted:', transaction.error);
         reject(new Error(`Track storage aborted: ${transaction.error?.message ?? 'unknown'}`));
+      }
     });
   }
 
@@ -203,6 +209,16 @@ class AudioStorageService {
       transaction.onerror = () => reject(new Error('Failed to clear storage'));
       transaction.onabort = () => reject(new Error('Clear transaction aborted'));
     });
+  }
+
+  // Maintain own running total rather than calling navigator.storage.estimate() after each operation
+  async getStorageStats(): Promise<{ count: number; size: number }> {
+    const tracks = await this.getAllTracks();
+    const size = tracks.reduce((sum: number, t) => sum + (t.fileSize ?? 0), 0);
+    return {
+      count: tracks.length,
+      size,
+    };
   }
 
   /**

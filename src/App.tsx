@@ -65,11 +65,9 @@ function App() {
   const updateStats = useCallback(async () => {
     if (!storageAvailable) return;
     try {
-      const count = await audioStorage.getStoredFileCount();
-      const size = await audioStorage.getStorageSize();
-      setStorageStats({ count, size });
+      const stats = await audioStorage.getStorageStats();
+      setStorageStats(stats);
     } catch (err) {
-      // Stats failure is non-critical — log but don't surface to user
       console.error('Failed to get storage stats:', err);
     }
   }, [storageAvailable]);
@@ -158,7 +156,7 @@ function App() {
         hasStoredAudio: storageAvailable,
         prediction: result,
         features: result.features,
-        analyzedAt: Date.now(),
+        analyzedAt: Date.now()
       };
 
       if (storageAvailable) {
