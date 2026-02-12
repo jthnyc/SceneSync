@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useScenePrediction } from './hooks/useScenePrediction';
 import type { AnalyzedTrack, PredictionResult } from './types/audio';
@@ -7,6 +7,27 @@ import { PrivacyNotice } from './components/PrivacyNotice';
 import { validateAudioFile } from './utils/fileValidation';
 import { Header, ModelStatus, Sidebar, MainContent } from './components';
 import './index.css';
+
+// Detects Safari private browsing mode, which blocks IndexedDB entirely
+function isStorageUnavailable(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  return (
+    err.name === 'InvalidStateError' ||
+    err.name === 'SecurityError' ||
+    err.message.includes('The operation is insecure') ||
+    err.message.includes('storage')
+  );
+}
+
+// Detects browser storage quota exceeded errors
+function isQuotaError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  return (
+    err.name === 'QuotaExceededError' ||
+    err.message.includes('QuotaExceededError') ||
+    err.message.includes('quota')
+  );
+}
 
 function App() {
   const {
@@ -27,13 +48,31 @@ function App() {
   const [trackHistory, setTrackHistory] = useState<AnalyzedTrack[]>([]);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
-  const [storageStats, setStorageStats] = useState({ count: 0, size: 0 });  
+  const [storageStats, setStorageStats] = useState({ count: 0, size: 0 });
+  const [storageAvailable, setStorageAvailable] = useState(true);
+  // Drives the red "storage full" state in StorageInfo — set on quota error,
+  // cleared when the user removes tracks, freeing space
+  const [storageFull, setStorageFull] = useState(false);
   const lastToastResultRef = useRef<PredictionResult | null>(null);
   const storedTrackIds = useRef<Set<string>>(new Set());
 
   const displayResult: PredictionResult | undefined = selectedTrackId 
     ? trackHistory.find(t => t.id === selectedTrackId)?.result ?? undefined
     : result ?? undefined;
+
+  // Stable function — called directly after storage writes/deletes complete
+  // rather than relying on trackHistory changes, which fire before writes commit
+  const updateStats = useCallback(async () => {
+    if (!storageAvailable) return;
+    try {
+      const count = await audioStorage.getStoredFileCount();
+      const size = await audioStorage.getStorageSize();
+      setStorageStats({ count, size });
+    } catch (err) {
+      // Stats failure is non-critical — log but don't surface to user
+      console.error('Failed to get storage stats:', err);
+    }
+  }, [storageAvailable]);
 
   // Only trigger fade-in animation when new prediction completes
   useEffect(() => {
@@ -52,59 +91,60 @@ function App() {
   useEffect(() => {
     const init = async () => {
       try {
-        // Initialize IndexedDB
         await audioStorage.init();
-
-        // Clear old localStorage data (migration cleanup)
         localStorage.removeItem('sceneSync_trackHistory');
 
-        // Load track history from IndexedDB
         const storedTracks = await audioStorage.getAllTracks();
-        
-        // Deduplicate by ID (in case of corruption)
         const uniqueTracks = storedTracks.filter((track, index, self) =>
           index === self.findIndex((t) => t.id === track.id)
         );
-        
         setTrackHistory(uniqueTracks);
 
         const descriptionsResponse = await fetch('/scene_descriptions.json');
         const descriptions = await descriptionsResponse.json();
         setSceneDescriptions(descriptions);
         await initializeModel();
+
+        // Initial stats load after DB is ready
+        await updateStats();
       } catch (err) {
         console.error('Failed to initialize:', err);
+        if (isStorageUnavailable(err)) {
+          setStorageAvailable(false);
+          toast('Storage unavailable — results won\'t be saved this session. Try a non-private window.', {
+            icon: '🔒',
+            duration: 8000,
+            style: {
+              background: '#1f2937',
+              color: '#fbbf24',
+              border: '1px solid #92400e',
+            },
+          });
+        } else {
+          toast.error('Failed to initialize storage. Some features may be unavailable.', {
+            duration: 5000,
+          });
+        }
       }
     };
     init();
-  }, [initializeModel]);
+  }, [initializeModel, updateStats]);
 
   // Show error toast when model loading fails
   useEffect(() => {
     if (error && error.type === 'model') {
-      toast.error(error.message, {
-        duration: 5000,
-      });
+      toast.error(error.message, { duration: 5000 });
     }
   }, [error]);
 
   // Add track to history when result updates
   useEffect(() => {
     if (result && selectedFile) {
-      // Skip if we've already processed this exact result object
-      if (lastToastResultRef.current === result) {
-        return;
-      }
+      if (lastToastResultRef.current === result) return;
 
-      // Generate truly unique ID with timestamp + random
       const trackId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      if (storedTrackIds.current.has(trackId)) return;
 
-      // Skip if we've already stored this ID (extra safety)
-      if (storedTrackIds.current.has(trackId)) {
-        return;
-      }
-
-      // Mark this ID and result as processed immediately
       storedTrackIds.current.add(trackId);
       lastToastResultRef.current = result;
 
@@ -115,71 +155,57 @@ function App() {
         duration: result.audioDuration,
         timestamp: Date.now(),
         result: result,
-        hasStoredAudio: true,
+        hasStoredAudio: storageAvailable,
         prediction: result,
         features: result.features,
         analyzedAt: Date.now(),
       };
 
-      // Store complete track (audio + metadata) in IndexedDB
-      audioStorage.storeTrack(trackId, selectedFile, newTrack)
-        .then(() => {
-          console.log('Track stored successfully:', trackId);
-        })
-        .catch((err: Error) => {
-          console.error('Failed to store track:', err);
-          // Remove from stored set on failure
-          storedTrackIds.current.delete(trackId);
-          // Update the track in history to reflect storage failure
-          setTrackHistory(prev => 
-            prev.map(t => t.id === trackId ? { ...t, hasStoredAudio: false } : t)
-          );
-        });
-      
-      // Add to state
+      if (storageAvailable) {
+        audioStorage.storeTrack(trackId, selectedFile, newTrack)
+          .then(() => {
+            console.log('Track stored successfully:', trackId);
+            // Update stats AFTER the write commits — fixes the Safari count delay
+            updateStats();
+          })
+          .catch((err: Error) => {
+            console.error('Failed to store track:', err);
+            storedTrackIds.current.delete(trackId);
+            setTrackHistory(prev =>
+              prev.map(t => t.id === trackId ? { ...t, hasStoredAudio: false } : t)
+            );
+
+            if (isQuotaError(err)) {
+              // Quota errors are actionable — tell the user exactly what to do
+              setStorageFull(true);
+              toast.error('Storage full — clear some tracks to save new ones.', {
+                duration: 6000,
+              });
+            } else {
+              // Generic failure — analysis still visible this session
+              toast.error('Failed to save track to storage. Analysis results are still visible this session.', {
+                duration: 5000,
+              });
+            }
+          });
+      }
+
       setTrackHistory(prev => [newTrack, ...prev]);
-      
-      // Show toast
-      toast.success('Analysis complete!', {
-        duration: 3000,
-      });
-      
+      toast.success('Analysis complete!', { duration: 3000 });
       setSelectedTrackId(trackId);
     }
-  }, [result, selectedFile]);
-
-  // Update storage stats when history changes
-  useEffect(() => {
-    const updateStats = async () => {
-      try {
-        const count = await audioStorage.getStoredFileCount();
-        const size = await audioStorage.getStorageSize();
-        setStorageStats({ count, size });
-      } catch (err) {
-        console.error('Failed to get storage stats:', err);
-      }
-    };
-
-    updateStats();
-  }, [trackHistory]);
+  }, [result, selectedFile, storageAvailable, updateStats]);
 
   // File upload handler with validation
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Validate file before processing
     const validation = validateAudioFile(file);
-    
     if (!validation.isValid) {
-      toast.error(validation.error || 'Invalid file', {
-        duration: 5000,
-      });
-      // Reset input so same file can be selected again
+      toast.error(validation.error || 'Invalid file', { duration: 5000 });
       e.target.value = '';
       return;
     }
-
     setSelectedFile(file);
     setSelectedTrackId(null);
     await predictSceneType(file);
@@ -190,30 +216,20 @@ function App() {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
-
-    // Validate file before processing
     const validation = validateAudioFile(file);
-    
     if (!validation.isValid) {
-      toast.error(validation.error || 'Invalid file', {
-        duration: 5000,
-      });
+      toast.error(validation.error || 'Invalid file', { duration: 5000 });
       return;
     }
-
     setSelectedFile(file);
     setSelectedTrackId(null);
     await predictSceneType(file);
   };
 
-  // Retry prediction after error
   const handleRetry = () => {
-    if (selectedFile) {
-      retryPrediction(selectedFile);
-    }
+    if (selectedFile) retryPrediction(selectedFile);
   };
 
-  // Clear file handler
   const handleClearFile = () => {
     setSelectedFile(null);
     setSelectedTrackId(null);
@@ -222,40 +238,33 @@ function App() {
     if (fileInput) fileInput.value = '';
   };
 
-  // Track selection handler
   const handleSelectTrack = (id: string) => {
     setSelectedTrackId(id);
     setSelectedFile(null);
     clearError();
   };
 
-  // Remove track handler
   const removeTrack = async (id: string) => {
     try {
-      // Delete from IndexedDB
       await audioStorage.deleteTrack(id);
-      
-      // Update state
       setTrackHistory(prev => prev.filter(t => t.id !== id));
       if (selectedTrackId === id) {
         setSelectedTrackId(null);
         setSelectedFile(null);
       }
-      toast.success('Track removed', {
-        duration: 2000,
-      });
+      // Update stats after delete commits
+      await updateStats();
+      // If storage was full, a deletion frees space — clear the warning
+      setStorageFull(false);
+      toast.success('Track removed', { duration: 2000 });
     } catch (err) {
       console.error('Failed to delete track:', err);
       toast.error('Failed to remove track');
     }
   };
 
-  // Clear all tracks handler
   const clearAllTracks = async () => {
-    if (!window.confirm('Clear all tracks? This cannot be undone.')) {
-      return;
-    }
-
+    if (!window.confirm('Clear all tracks? This cannot be undone.')) return;
     try {
       const count = trackHistory.length;
       await audioStorage.clearAllTracks();
@@ -263,16 +272,16 @@ function App() {
       setSelectedTrackId(null);
       setSelectedFile(null);
       clearError();
-      toast.success(`Cleared ${count} track${count !== 1 ? 's' : ''}`, {
-        duration: 2000,
-      });
+      // Update stats after clear commits and reset full state
+      await updateStats();
+      setStorageFull(false);
+      toast.success(`Cleared ${count} track${count !== 1 ? 's' : ''}`, { duration: 2000 });
     } catch (err) {
       console.error('Failed to clear all:', err);
       toast.error('Failed to clear tracks');
     }
   };
 
-  // Retry model initialization
   const handleRetryModelInit = async () => {
     await initializeModel();
   };
@@ -289,16 +298,10 @@ function App() {
             border: '1px solid #374151',
           },
           success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
+            iconTheme: { primary: '#10b981', secondary: '#fff' },
           },
           error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
+            iconTheme: { primary: '#ef4444', secondary: '#fff' },
           },
         }}
       />
@@ -312,7 +315,6 @@ function App() {
           onRetry={handleRetryModelInit}
         />
 
-        {/* Privacy Notice */}
         <PrivacyNotice />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -324,11 +326,12 @@ function App() {
             sceneDescriptions={sceneDescriptions}
             showResults={showResults}
             progress={progressState.progress}
-            progressStage={progressState.stage}  
+            progressStage={progressState.stage}
             onSelectTrack={handleSelectTrack}
             onRemoveTrack={removeTrack}
             onClearAll={clearAllTracks}
             storageStats={storageStats}
+            storageFull={storageFull}
           />
 
           <MainContent
@@ -349,9 +352,8 @@ function App() {
           />
         </div>
 
-        {/* Debug Info */}
         {displayResult && (
-          <div 
+          <div
             className={`
               mt-6 bg-gray-800/30 p-4 rounded-lg border border-gray-700
               transition-all duration-200 ease-out

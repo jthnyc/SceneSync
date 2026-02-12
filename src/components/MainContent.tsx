@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { PredictionResult } from '../hooks/useScenePrediction';
 import { Clock, Target } from 'lucide-react';
 import { formatFileSize, formatDuration } from '../utils/formatUtils';
@@ -57,6 +58,8 @@ const MainContent: React.FC<MainContentProps> = ({
   useEffect(() => {
     if (selectedTrackId && !selectedFile && currentTrack?.hasStoredAudio) {
       setLoadingHistoryAudio(true);
+      // Reset immediately so stale audio from a previous track never lingers
+      setHistoryAudioFile(null);
       audioStorage.getAudioFile(selectedTrackId)
         .then((file) => {
           if (file) {
@@ -65,6 +68,10 @@ const MainContent: React.FC<MainContentProps> = ({
         })
         .catch((err) => {
           console.error('Failed to load audio from storage:', err);
+          setHistoryAudioFile(null);
+          toast.error('Could not load audio from storage. Try re-uploading the file.', {
+            duration: 4000,
+          });
         })
         .finally(() => {
           setLoadingHistoryAudio(false);

@@ -30,7 +30,7 @@ class AudioStorageService {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        
+
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
           objectStore.createIndex('storedAt', 'storedAt', { unique: false });
@@ -40,7 +40,11 @@ class AudioStorageService {
   }
 
   /**
-   * Store complete track (audio + metadata)
+   * Store complete track (audio + metadata).
+   * Resolves on transaction.oncomplete — guarantees the write is actually
+   * committed to disk, not just staged. This means quota errors and other
+   * commit failures are caught and surfaced to the caller instead of
+   * silently disappearing after request.onsuccess fires.
    */
   async storeTrack(id: string, audioFile: File, trackData: any): Promise<void> {
     if (!this.db) await this.init();
@@ -58,8 +62,20 @@ class AudioStorageService {
       };
 
       const request = store.put(storedTrack);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(new Error('Failed to store track'));
+
+      // request.onerror catches issues staging the write (e.g. constraint violations)
+      request.onerror = () => reject(new Error('Failed to stage track write'));
+
+      // transaction.oncomplete is the only guarantee the blob is on disk
+      transaction.oncomplete = () => resolve();
+
+      // transaction.onerror catches commit failures (quota exceeded, etc.)
+      // Previously unhandled — this is why quota errors were silent
+      transaction.onerror = () =>
+        reject(new Error(`Failed to store track: ${transaction.error?.message ?? 'unknown error'}`));
+
+      transaction.onabort = () =>
+        reject(new Error(`Track storage aborted: ${transaction.error?.message ?? 'unknown'}`));
     });
   }
 
@@ -87,6 +103,7 @@ class AudioStorageService {
       };
 
       request.onerror = () => reject(new Error('Failed to retrieve audio'));
+      transaction.onerror = () => reject(new Error(`Transaction failed: ${transaction.error?.message ?? 'unknown'}`));
     });
   }
 
@@ -116,6 +133,7 @@ class AudioStorageService {
       };
 
       request.onerror = () => reject(new Error('Failed to load tracks'));
+      transaction.onerror = () => reject(new Error(`Transaction failed: ${transaction.error?.message ?? 'unknown'}`));
     });
   }
 
@@ -125,10 +143,11 @@ class AudioStorageService {
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      const request = store.delete(id);
+      store.delete(id);
 
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(new Error('Failed to delete track'));
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(new Error('Failed to delete track'));
+      transaction.onabort = () => reject(new Error('Delete transaction aborted'));
     });
   }
 
@@ -142,6 +161,7 @@ class AudioStorageService {
 
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(new Error('Failed to count files'));
+      transaction.onerror = () => reject(new Error(`Transaction failed: ${transaction.error?.message ?? 'unknown'}`));
     });
   }
 
@@ -167,6 +187,7 @@ class AudioStorageService {
       };
 
       request.onerror = () => reject(new Error('Failed to calculate size'));
+      transaction.onerror = () => reject(new Error(`Transaction failed: ${transaction.error?.message ?? 'unknown'}`));
     });
   }
 
@@ -176,24 +197,32 @@ class AudioStorageService {
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      const request = store.clear();
+      store.clear();
 
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(new Error('Failed to clear storage'));
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(new Error('Failed to clear storage'));
+      transaction.onabort = () => reject(new Error('Clear transaction aborted'));
     });
   }
 
+  /**
+   * Enforces MAX_STORED_FILES limit by deleting oldest entries first.
+   * Now properly awaits cursor deletion before returning, so the limit
+   * is guaranteed to be enforced before the caller writes a new track.
+   */
   private async enforceStorageLimit(): Promise<void> {
     const count = await this.getStoredFileCount();
-    
-    if (count >= MAX_STORED_FILES) {
+    if (count < MAX_STORED_FILES) return;
+
+    const toDelete = count - MAX_STORED_FILES + 1;
+
+    return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       const index = store.index('storedAt');
       const request = index.openCursor(null, 'next'); // Oldest first
 
       let deleted = 0;
-      const toDelete = count - MAX_STORED_FILES + 1;
 
       request.onsuccess = () => {
         const cursor = request.result;
@@ -202,8 +231,15 @@ class AudioStorageService {
           deleted++;
           cursor.continue();
         }
+        // No else needed — transaction.oncomplete handles resolution
       };
-    }
+
+      request.onerror = () => reject(new Error('Failed to enforce storage limit'));
+
+      // Resolve only after all deletions have committed
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(new Error('Storage limit transaction failed'));
+    });
   }
 
   close(): void {

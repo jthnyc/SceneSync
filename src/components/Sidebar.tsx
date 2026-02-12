@@ -20,6 +20,7 @@ interface SidebarProps {
   onRemoveTrack: (id: string) => void;
   onClearAll: () => void;
   storageStats: { count: number; size: number };
+  storageFull: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -35,6 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onRemoveTrack,
   onClearAll,
   storageStats,
+  storageFull,
 }) => {
   const announcementRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +75,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             <ProgressIndicator progress={progress} stage={progressStage} />
           </div>
           
-          {/* Optional: Keep skeleton for visual continuity */}
           <div className="pt-4 opacity-30 hidden sm:block" aria-hidden="true">
             <div className="bg-gray-700/50 p-4 rounded-lg">
               <Skeleton className="h-4 w-20 mb-2" />
@@ -95,11 +96,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      {/* Storage Info */}
+      {/* Storage Info — turns red and shows full state when quota exceeded */}
       <StorageInfo
         fileCount={storageStats.count}
         totalSize={storageStats.size}
         onClear={onClearAll}
+        isFull={storageFull}
       />
 
       {/* Track History */}

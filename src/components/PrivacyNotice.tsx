@@ -1,4 +1,4 @@
-import { Shield, Database } from 'lucide-react';
+import { Shield, Database, AlertTriangle } from 'lucide-react';
 
 export function PrivacyNotice() {
   return (
@@ -24,9 +24,10 @@ interface StorageInfoProps {
   fileCount: number;
   totalSize: number;
   onClear: () => void;
+  isFull?: boolean;
 }
 
-export function StorageInfo({ fileCount, totalSize, onClear }: StorageInfoProps) {
+export function StorageInfo({ fileCount, totalSize, onClear, isFull = false }: StorageInfoProps) {
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -35,20 +36,40 @@ export function StorageInfo({ fileCount, totalSize, onClear }: StorageInfoProps)
     return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
   };
 
-  if (fileCount === 0) return null;
+  if (fileCount === 0 && !isFull) return null;
 
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
+    <div
+      className={`rounded-lg p-3 mb-4 border transition-colors ${
+        isFull
+          ? 'bg-red-950/30 border-red-700/50'
+          : 'bg-gray-50 border-gray-200'
+      }`}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Database className="w-4 h-4 text-gray-500" />
-          <span className="text-xs text-gray-600">
-            {fileCount} {fileCount === 1 ? 'file' : 'files'} stored • {formatBytes(totalSize)}
+          {isFull ? (
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+          ) : (
+            <Database className="w-4 h-4 text-gray-500 shrink-0" />
+          )}
+          <span className={`text-xs ${isFull ? 'text-red-300' : 'text-gray-600'}`}>
+            {isFull ? (
+              <>Storage full — clear tracks to save new ones</>
+            ) : (
+              <>
+                {fileCount} {fileCount === 1 ? 'file' : 'files'} stored • {formatBytes(totalSize)}
+              </>
+            )}
           </span>
         </div>
         <button
           onClick={onClear}
-          className="text-xs text-red-600 hover:text-red-700 font-medium focus:outline-none focus:underline"
+          className={`text-xs font-medium focus:outline-none focus:underline ${
+            isFull
+              ? 'text-red-400 hover:text-red-300'
+              : 'text-red-600 hover:text-red-700'
+          }`}
           aria-label="Clear all stored files"
         >
           Clear All
