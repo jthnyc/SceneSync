@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, X } from 'lucide-react';
 import { formatFileSize, formatDuration } from '../utils/formatUtils';
 
 interface AudioPlayerProps {
@@ -121,18 +121,18 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       {/* Hidden audio element */}
       {audioUrl && <audio ref={audioRef} src={audioUrl} preload="metadata" />}
 
-      {/* Header with file info */}
+      {/* Header with file info and clear button */}
       {fileName && (
         <div className="flex items-start justify-between gap-4 mb-3">
           <div className="flex-1 min-w-0">
             <div className="text-sm text-gray-400 mb-1">Current file</div>
-            
+
             {/* Desktop: filename and metadata on same row */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="text-white font-medium truncate">
                 {fileName}
               </div>
-              
+
               {/* File metadata */}
               <div className="flex items-center gap-3 text-sm flex-shrink-0">
                 {fileSize && (
@@ -141,6 +141,17 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
               </div>
             </div>
           </div>
+
+          {/* FIX 3: onClear was wired up in MainContent but never rendered here */}
+          {onClear && (
+            <button
+              onClick={onClear}
+              className="p-1.5 hover:bg-gray-600/50 rounded-lg transition-colors flex-shrink-0 mt-0.5"
+              aria-label="Remove current file"
+            >
+              <X size={16} className="text-gray-400 hover:text-gray-200" />
+            </button>
+          )}
         </div>
       )}
 
@@ -165,9 +176,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
       <div className="flex items-center justify-between gap-2">
         {/* Left: Playback controls */}
         <div className="flex items-center gap-2">
+          {/* FIX 1: p-2 → p-3 to meet 44px minimum touch target (was 34px) */}
           <button
             onClick={() => skip(-10)}
-            className="p-2 hover:bg-gray-600/50 rounded-lg transition-colors"
+            className="p-3 hover:bg-gray-600/50 rounded-lg transition-colors"
             aria-label="Skip backward 10 seconds"
           >
             <SkipBack size={18} className="text-gray-300" />
@@ -185,9 +197,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             )}
           </button>
 
+          {/* FIX 1: p-2 → p-3 to meet 44px minimum touch target (was 34px) */}
           <button
             onClick={() => skip(10)}
-            className="p-2 hover:bg-gray-600/50 rounded-lg transition-colors"
+            className="p-3 hover:bg-gray-600/50 rounded-lg transition-colors"
             aria-label="Skip forward 10 seconds"
           >
             <SkipForward size={18} className="text-gray-300" />
@@ -196,9 +209,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
         {/* Right: Volume control */}
         <div className="flex items-center gap-2">
+          {/* FIX 1: p-2 → p-3 to meet 44px minimum touch target (was 34px) */}
           <button
             onClick={toggleMute}
-            className="p-2 hover:bg-gray-600/50 rounded-lg transition-colors"
+            className="p-3 hover:bg-gray-600/50 rounded-lg transition-colors"
             aria-label={isMuted ? 'Unmute' : 'Mute'}
           >
             {isMuted || volume === 0 ? (
@@ -208,6 +222,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             )}
           </button>
 
+          {/* FIX 2: was hidden sm:block — volume slider now always visible at w-16.
+              At 375px the controls row has ~311px usable; left group ≈136px,
+              right group ≈ 98px (button + gap + slider), well within budget. */}
           <input
             type="range"
             min="0"
@@ -215,7 +232,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
             step="0.01"
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
-            className="hidden sm:block w-20 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
+            className="w-16 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-primary-500"
             aria-label="Volume"
           />
         </div>

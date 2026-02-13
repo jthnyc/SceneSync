@@ -49,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [displayResult, isPredicting]);
 
   return (
-    <div className="lg:col-span-1 bg-gray-800/50 p-4 sm:p-6 rounded-xl border border-gray-700">
+    <div className="lg:col-span-1 lg:order-1 bg-gray-800/50 p-4 sm:p-6 rounded-xl border border-gray-700">
       {/* Screen reader announcements */}
       <div
         ref={announcementRef}

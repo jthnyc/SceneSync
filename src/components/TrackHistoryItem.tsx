@@ -60,7 +60,8 @@ export function TrackHistoryItem({
         }}
         className="
           absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center
-          bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 hover:bg-red-200
+        bg-red-100 text-red-600 hover:bg-red-200
+          sm:opacity-0 sm:group-hover:opacity-100
           transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:opacity-100
         "
         aria-label={`Delete ${track.fileName}`}

@@ -85,7 +85,7 @@ const MainContent: React.FC<MainContentProps> = ({
   // const audioFileToPlay = selectedFile || historyAudioFile;
 
   return (
-    <div className="lg:col-span-2 bg-gray-800/50 p-4 sm:p-6 rounded-xl border border-gray-700">
+    <div className="lg:col-span-2 lg:order-2 bg-gray-800/50 p-4 sm:p-6 rounded-xl border border-gray-700">
       <h2 className="text-xl font-semibold mb-4 text-primary-400">Upload Audio</h2>
       
       {/* Upload Zone */}

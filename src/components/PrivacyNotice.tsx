@@ -46,16 +46,16 @@ export function StorageInfo({ fileCount, totalSize, onClear, isFull = false }: S
           : 'bg-gray-50 border-gray-200'
       }`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {isFull ? (
             <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
           ) : (
             <Database className="w-4 h-4 text-gray-500 shrink-0" />
           )}
-          <span className={`text-xs ${isFull ? 'text-red-300' : 'text-gray-600'}`}>
+          <span className={`text-xs min-w-0 ${isFull ? 'text-red-300' : 'text-gray-600'}`}>
             {isFull ? (
-              <>Storage full — clear tracks to save new ones</>
+              <>Storage full — clear tracks to free space</>
             ) : (
               <>
                 {fileCount} {fileCount === 1 ? 'file' : 'files'} stored • {formatBytes(totalSize)}
@@ -65,7 +65,7 @@ export function StorageInfo({ fileCount, totalSize, onClear, isFull = false }: S
         </div>
         <button
           onClick={onClear}
-          className={`text-xs font-medium focus:outline-none focus:underline ${
+          className={`text-xs font-medium shrink-0 focus:outline-none focus:underline ${
             isFull
               ? 'text-red-400 hover:text-red-300'
               : 'text-red-600 hover:text-red-700'

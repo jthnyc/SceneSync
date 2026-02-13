@@ -316,22 +316,6 @@ function App() {
         <PrivacyNotice />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          <Sidebar
-            displayResult={displayResult}
-            isPredicting={isPredicting}
-            trackHistory={trackHistory}
-            selectedTrackId={selectedTrackId}
-            sceneDescriptions={sceneDescriptions}
-            showResults={showResults}
-            progress={progressState.progress}
-            progressStage={progressState.stage}
-            onSelectTrack={handleSelectTrack}
-            onRemoveTrack={removeTrack}
-            onClearAll={clearAllTracks}
-            storageStats={storageStats}
-            storageFull={storageFull}
-          />
-
           <MainContent
             selectedFile={selectedFile}
             selectedTrackId={selectedTrackId}
@@ -347,6 +331,22 @@ function App() {
             error={error}
             onRetry={handleRetry}
             onDismissError={clearError}
+          />
+
+          <Sidebar
+            displayResult={displayResult}
+            isPredicting={isPredicting}
+            trackHistory={trackHistory}
+            selectedTrackId={selectedTrackId}
+            sceneDescriptions={sceneDescriptions}
+            showResults={showResults}
+            progress={progressState.progress}
+            progressStage={progressState.stage}
+            onSelectTrack={handleSelectTrack}
+            onRemoveTrack={removeTrack}
+            onClearAll={clearAllTracks}
+            storageStats={storageStats}
+            storageFull={storageFull}
           />
         </div>
 

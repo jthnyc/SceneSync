@@ -6,7 +6,15 @@ export interface FeatureTimeSeries {
   spectralCentroid: number[];
   spectralRolloff: number[];
   tempo: number;
+  // Added so FeatureVisualizations can convert frame indices to seconds
+  // without hardcoding a magic number independently
+  sampleRate: number;
 }
+
+// Promoted from a local const repeated in 5 functions — single source of truth.
+// FeatureVisualizations imports this to convert frameIndex → seconds.
+export const HOP_SIZE = 512;
+const BUFFER_SIZE = 2048;
 
 /**
  * Extract all 44 audio features and time-series arrays required by the SceneSync model
@@ -18,7 +26,7 @@ export const extractBrowserCompatibleFeatures = async (
   const sampleRate = audioBuffer.sampleRate;
   const audioData = audioBuffer.getChannelData(0);
   
-  const duration = Math.min(30, audioBuffer.duration);
+  const duration = audioBuffer.duration;
   const sampleCount = Math.floor(duration * sampleRate);
   const signal = audioData.slice(0, sampleCount);
 
@@ -34,13 +42,13 @@ export const extractBrowserCompatibleFeatures = async (
     // Calculate tempo
     const tempo = estimateTempo(rms, sampleRate);
 
-    // Store time-series for graphs
     const timeSeries: FeatureTimeSeries = {
       rms,
       zcr,
       spectralCentroid: centroid,
       spectralRolloff: rolloff,
-      tempo
+      tempo,
+      sampleRate, // stored so visualizations can convert frames → seconds
     };
 
     // 1. BASIC AUDIO PROPERTIES (4 features)
@@ -54,7 +62,7 @@ export const extractBrowserCompatibleFeatures = async (
     // 2. ENERGY FEATURES (4 features)
     features.push(mean(rms));
     features.push(std(rms));
-    features.push(Math.max(...rms));
+    features.push(rms.reduce((a, b) => Math.max(a, b), -Infinity));
     features.push(mean(zcr));
 
     // 3. SPECTRAL FEATURES (4 features)
@@ -98,17 +106,15 @@ function extractFramedFeature(
   sampleRate: number,
   featureName: string
 ): number[] {
-  const hopSize = 512;
-  const bufferSize = 2048;
   const values: number[] = [];
 
-  for (let i = 0; i < signal.length - bufferSize; i += hopSize) {
-    const frame = signal.slice(i, i + bufferSize);
+  for (let i = 0; i < signal.length - BUFFER_SIZE; i += HOP_SIZE) {
+    const frame = signal.slice(i, i + BUFFER_SIZE);
     
     // Cast to any to bypass incorrect Meyda types
     const result = (Meyda as any).extract(featureName, frame, {
       sampleRate: sampleRate,
-      bufferSize: bufferSize
+      bufferSize: BUFFER_SIZE,
     });
     
     if (typeof result === 'number' && !isNaN(result)) {
@@ -123,15 +129,13 @@ function extractFramedFeature(
  * Extract MFCCs (returns 13 arrays, one per coefficient)
  */
 function extractMFCCs(signal: Float32Array, sampleRate: number): number[][] {
-  const hopSize = 512;
-  const bufferSize = 2048;
   const mfccArrays: number[][] = Array.from({ length: 13 }, () => []);
 
-  for (let i = 0; i < signal.length - bufferSize; i += hopSize) {
-    const frame = signal.slice(i, i + bufferSize);
+  for (let i = 0; i < signal.length - BUFFER_SIZE; i += HOP_SIZE) {
+    const frame = signal.slice(i, i + BUFFER_SIZE);
     const mfcc = (Meyda as any).extract('mfcc', frame, {
       sampleRate: sampleRate,
-      bufferSize: bufferSize
+      bufferSize: BUFFER_SIZE,
     });
     
     if (Array.isArray(mfcc) && mfcc.length >= 13) {
@@ -150,15 +154,13 @@ function extractMFCCs(signal: Float32Array, sampleRate: number): number[][] {
  * Extract spectral contrast (7 frequency bands)
  */
 function extractSpectralContrast(signal: Float32Array, sampleRate: number): number[][] {
-  const hopSize = 512;
-  const bufferSize = 2048;
   const contrastArrays: number[][] = Array.from({ length: 7 }, () => []);
 
-  for (let i = 0; i < signal.length - bufferSize; i += hopSize) {
-    const frame = signal.slice(i, i + bufferSize);
+  for (let i = 0; i < signal.length - BUFFER_SIZE; i += HOP_SIZE) {
+    const frame = signal.slice(i, i + BUFFER_SIZE);
     const contrast = (Meyda as any).extract('spectralFlatness', frame, {
       sampleRate: sampleRate,
-      bufferSize: bufferSize
+      bufferSize: BUFFER_SIZE,
     });
     
     if (typeof contrast === 'number' && !isNaN(contrast)) {
@@ -175,15 +177,13 @@ function extractSpectralContrast(signal: Float32Array, sampleRate: number): numb
  * Extract chroma features (12 pitch classes)
  */
 function extractChroma(signal: Float32Array, sampleRate: number): number[][] {
-  const hopSize = 512;
-  const bufferSize = 2048;
   const chromaArrays: number[][] = Array.from({ length: 12 }, () => []);
 
-  for (let i = 0; i < signal.length - bufferSize; i += hopSize) {
-    const frame = signal.slice(i, i + bufferSize);
+  for (let i = 0; i < signal.length - BUFFER_SIZE; i += HOP_SIZE) {
+    const frame = signal.slice(i, i + BUFFER_SIZE);
     const chroma = (Meyda as any).extract('chroma', frame, {
       sampleRate: sampleRate,
-      bufferSize: bufferSize
+      bufferSize: BUFFER_SIZE,
     });
     
     if (Array.isArray(chroma) && chroma.length === 12) {
@@ -202,8 +202,7 @@ function extractChroma(signal: Float32Array, sampleRate: number): number[][] {
  * Estimate tempo from RMS energy
  */
 function estimateTempo(rmsFrames: number[], sampleRate: number): number {
-  const hopSize = 512;
-  const frameRate = sampleRate / hopSize;
+  const frameRate = sampleRate / HOP_SIZE;
   
   const threshold = mean(rmsFrames) + 0.3 * std(rmsFrames);
   const minSpacing = Math.floor(0.2 * frameRate);
@@ -220,19 +219,16 @@ function estimateTempo(rmsFrames: number[], sampleRate: number): number {
 
   if (onsets.length < 2) return 120;
 
-  // Use autocorrelation to find periodicity
   const intervals: number[] = [];
   for (let i = 1; i < onsets.length; i++) {
     intervals.push(onsets[i] - onsets[i - 1]);
   }
 
-  // Find median interval (more robust than mean)
   intervals.sort((a, b) => a - b);
   const medianInterval = intervals[Math.floor(intervals.length / 2)];
   
   let tempo = (60 * frameRate) / medianInterval;
 
-  // Handle tempo doubling/halving - prefer 80-160 BPM range
   while (tempo > 180) tempo /= 2;
   while (tempo < 80) tempo *= 2;
 
