@@ -118,7 +118,6 @@ const MainContent: React.FC<MainContentProps> = ({
             audioFile={selectedFile}
             fileName={selectedFile.name}
             fileSize={selectedFile.size}
-            onClear={onClearFile}
           />
         </div>
       )}
@@ -130,7 +129,6 @@ const MainContent: React.FC<MainContentProps> = ({
             audioFile={historyAudioFile}
             fileName={currentTrack.fileName}
             fileSize={currentTrack.fileSize}
-            onClear={onClearFile}
           />
         </div>
       )}

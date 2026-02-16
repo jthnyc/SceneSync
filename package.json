@@ -27,7 +27,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "format": "prettier --write src/**/*.{ts,tsx}",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "analyze": "source-map-explorer 'build/static/js/*.js'"
   },
   "eslintConfig": {
@@ -52,6 +52,7 @@
     "@types/node": "^25.0.9",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
+    "source-map-explorer": "^2.5.3",
     "tailwindcss": "^3.4.0"
   }
 }
