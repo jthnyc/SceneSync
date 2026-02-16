@@ -7,9 +7,6 @@ interface FeatureVisualizationsProps {
   sceneType: string;
 }
 
-// FIX 3 & 4: Compute RMS stats once, outside render, with reduce instead of spread.
-// Math.max(...largeArray) risks "Maximum call stack exceeded" for 2700+ element arrays.
-// The Consistency reduce was also recalculating mean on every iteration — O(n²).
 function computeRmsStats(rms: number[]) {
   const min = rms.reduce((a, b) => Math.min(a, b), Infinity);
   const max = rms.reduce((a, b) => Math.max(a, b), -Infinity);
@@ -20,8 +17,22 @@ function computeRmsStats(rms: number[]) {
   return { min, max, range: max - min, consistency };
 }
 
-// Shared chart margin — bottom: 20 gives the "Time (frames)" insideBottom label room
-// to render without being clipped by the SVG boundary.
+// Reduces a dense frame array to ~targetPoints points by averaging
+// each window of frames into a single value. This turns 10,000–15,000
+// spiky data points into ~500 smooth points that reveal the actual
+// shape of the audio rather than rendering as a solid filled block.
+function movingAverage(values: number[], targetPoints = 500): number[] {
+  if (values.length <= targetPoints) return values;
+  const windowSize = Math.ceil(values.length / targetPoints);
+  const result: number[] = [];
+  for (let i = 0; i < values.length; i += windowSize) {
+    const window = values.slice(i, i + windowSize);
+    result.push(window.reduce((a, b) => a + b, 0) / window.length);
+  }
+  return result;
+}
+
+// Shared chart margin — bottom: 20 gives the axis label room to render
 const CHART_MARGIN = { top: 5, right: 5, bottom: 20, left: 0 };
 
 const tooltipStyle = {
@@ -32,36 +43,43 @@ const tooltipStyle = {
 export const FeatureVisualizations: React.FC<FeatureVisualizationsProps> = ({ timeSeries, sceneType }) => {
   const sampleRate = timeSeries.sampleRate ?? 44100;
 
-  // Convert frame index → seconds using the same HOP_SIZE used during extraction.
-  // seconds = frameIndex × HOP_SIZE / sampleRate
-  // e.g. frame 551 at 44100 Hz: 551 × 512 / 44100 ≈ 6.4s
   const frameToSeconds = (frameIndex: number) =>
     parseFloat(((frameIndex * HOP_SIZE) / sampleRate).toFixed(1));
 
-  const intensityData = timeSeries.rms.map((value, index) => ({
-    seconds: frameToSeconds(index),
+  // Smooth each series before mapping to chart data.
+  // Original: ~15,000 points. After: ~500 points.
+  // The chart shape becomes readable rather than a dense filled block.
+  const smoothedRms = movingAverage(timeSeries.rms);
+  const smoothedCentroid = movingAverage(timeSeries.spectralCentroid);
+  const smoothedRolloff = movingAverage(timeSeries.spectralRolloff);
+
+  // Align the rolloff and centroid arrays to the same length after smoothing
+  const spectralLength = Math.min(smoothedCentroid.length, smoothedRolloff.length);
+
+  const intensityData = smoothedRms.map((value, index) => ({
+    seconds: frameToSeconds(index * Math.ceil(timeSeries.rms.length / smoothedRms.length)),
     intensity: value * 100,
   }));
 
-  const spectralData = timeSeries.spectralCentroid.map((value, index) => ({
-    seconds: frameToSeconds(index),
-    centroid: value,
-    rolloff: timeSeries.spectralRolloff[index],
+  const spectralData = Array.from({ length: spectralLength }, (_, index) => ({
+    seconds: frameToSeconds(index * Math.ceil(timeSeries.spectralCentroid.length / spectralLength)),
+    centroid: smoothedCentroid[index],
+    rolloff: smoothedRolloff[index],
   }));
 
   const rmsStats = computeRmsStats(timeSeries.rms);
 
-  // Shared XAxis props — dataKey is now 'seconds', tickCount={5} prevents
-  // crowding on narrow screens, tickFormatter appends 's' suffix.
+  // width={40} trims the default 60px YAxis gutter — the numbers are short
+  // enough that 40px is sufficient and recovers usable chart width on mobile
   const xAxisProps = {
     dataKey: 'seconds' as const,
     stroke: '#9CA3AF',
     tickCount: 5,
     label: {
-        value: 'Time (seconds)',
-        position: 'insideBottom' as const,
-        offset: -5,
-        fill: '#9CA3AF',
+      value: 'Time (seconds)',
+      position: 'insideBottom' as const,
+      offset: -5,
+      fill: '#9CA3AF',
     },
   };
 
@@ -83,7 +101,7 @@ export const FeatureVisualizations: React.FC<FeatureVisualizationsProps> = ({ ti
           <LineChart data={spectralData} margin={CHART_MARGIN}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis {...xAxisProps} />
-            <YAxis stroke="#9CA3AF" />
+            <YAxis stroke="#9CA3AF" width={40} />
             <Tooltip {...tooltipStyle} />
             <Line
               type="monotone"
@@ -108,7 +126,7 @@ export const FeatureVisualizations: React.FC<FeatureVisualizationsProps> = ({ ti
           <LineChart data={intensityData} margin={CHART_MARGIN}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis {...xAxisProps} />
-            <YAxis stroke="#9CA3AF" />
+            <YAxis stroke="#9CA3AF" width={40} />
             <Tooltip {...tooltipStyle} />
             <Line
               type="monotone"
