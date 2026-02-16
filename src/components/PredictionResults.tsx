@@ -1,15 +1,12 @@
 import React from 'react';
 import { PredictionResult } from '../hooks/useScenePrediction';
+import { SPLIT_THRESHOLD } from '../constants/prediction';
 
 interface PredictionResultsProps {
   result: PredictionResult;
   sceneDescriptions: { [key: string]: string };
   showResults: boolean;
 }
-
-// How close the top two probabilities need to be (in percentage points)
-// before we treat the result as genuinely split.
-const SPLIT_THRESHOLD = 0.10;
 
 const PredictionResults: React.FC<PredictionResultsProps> = ({
   result,
