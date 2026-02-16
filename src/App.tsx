@@ -349,27 +349,6 @@ function App() {
             storageFull={storageFull}
           />
         </div>
-
-        {displayResult && (
-          <div
-            className={`
-              mt-6 bg-gray-800/30 p-4 rounded-lg border border-gray-700
-              transition-all duration-200 ease-out
-              ${showResults ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
-            `}
-          >
-            <details>
-              <summary className="cursor-pointer text-sm text-gray-400 hover:text-gray-300">
-                Debug: View Extracted Features
-              </summary>
-              <div className="mt-3 text-xs text-gray-500 font-mono max-h-40 overflow-y-auto">
-                {displayResult.features.map((val, idx) => (
-                  <div key={idx}>Feature {idx}: {val.toFixed(4)}</div>
-                ))}
-              </div>
-            </details>
-          </div>
-        )}
       </div>
     </div>
   );
