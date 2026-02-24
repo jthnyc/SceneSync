@@ -35,17 +35,16 @@ def print_summary(track):
     """Print a brief acoustic summary of a track's feature vector."""
     f = track["features"]
 
-    # Use 50th percentile (index 1) as the representative value for each feature
     rms_mid      = f["rms"][1]
     centroid_mid = f["centroid"][1]
     flatness_mid = f["flatness"][1]
     zcr_mid      = f["zcr"][1]
 
-    # Rough human-readable interpretations
-    energy    = "high" if rms_mid > 0.1 else "low" if rms_mid < 0.04 else "medium"
-    brightness= "bright" if centroid_mid > 3500 else "dark" if centroid_mid < 1500 else "mid-range"
-    texture   = "tonal" if flatness_mid < 0.0005 else "noisy" if flatness_mid > 0.01 else "mixed"
-    activity  = "high" if zcr_mid > 0.1 else "low" if zcr_mid < 0.04 else "medium"
+    # Thresholds derived from actual p25/p75 distribution across 7990 tracks
+    energy     = "high"    if rms_mid > 0.2268  else "low"   if rms_mid < 0.0945  else "medium"
+    brightness = "bright"  if centroid_mid > 2456 else "dark" if centroid_mid < 1255 else "mid-range"
+    texture    = "noisy"   if flatness_mid > 0.000301 else "tonal" if flatness_mid < 0.000015 else "mixed"
+    activity   = "high"    if zcr_mid > 0.0527  else "low"   if zcr_mid < 0.0234  else "medium"
 
     print(f"  energy={energy}, brightness={brightness}, texture={texture}, activity={activity}")
 
