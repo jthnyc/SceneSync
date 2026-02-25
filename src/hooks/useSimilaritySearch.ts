@@ -60,6 +60,20 @@ export const useSimilaritySearch = () => {
       setProgressState({ progress: 85, stage: 'Searching library...' });
       const matches = await similarityService.findSimilar(featureVector, 5);
 
+      // Temporary diagnostic — remove before commit
+      console.log('[similarity] query vector sample:', {
+        rms: featureVector.rms,
+        mfcc_1: featureVector.mfcc_1,
+        chroma_1: featureVector.chroma_1,
+      });
+      console.log('[similarity] top match vector sample:', {
+        file: matches[0].file,
+        score: matches[0].score,
+        rms: matches[0].features.rms,
+        mfcc_1: matches[0].features.mfcc_1,
+        chroma_1: matches[0].features.chroma_1,
+      });
+
       setProgressState({ progress: 100, stage: 'Done!' });
       setResults(matches);
       setError(null);

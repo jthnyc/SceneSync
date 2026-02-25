@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useScenePrediction } from './hooks/useScenePrediction';
+import { useSimilaritySearch } from './hooks/useSimilaritySearch';
 import type { AnalyzedTrack, PredictionResult } from './types/audio';
 import { audioStorage } from './services/audioStorageService';
 import { PrivacyNotice } from './components/PrivacyNotice';
@@ -42,6 +43,12 @@ function App() {
     clearError,
     retryPrediction,
   } = useScenePrediction();
+
+  const {
+    isSearching,
+    results: similarityResults,
+    findSimilar,
+  } = useSimilaritySearch();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [sceneDescriptions, setSceneDescriptions] = useState<{ [key: string]: string }>({});
@@ -207,6 +214,7 @@ function App() {
     setSelectedFile(file);
     setSelectedTrackId(null);
     await predictSceneType(file);
+    findSimilar(file);  // ← runs in parallel
   };
 
   // Drag and drop handler with validation
@@ -222,6 +230,7 @@ function App() {
     setSelectedFile(file);
     setSelectedTrackId(null);
     await predictSceneType(file);
+    findSimilar(file);  // ← runs in parallel
   };
 
   const handleRetry = () => {
@@ -331,6 +340,8 @@ function App() {
             error={error}
             onRetry={handleRetry}
             onDismissError={clearError}
+            similarityResults={similarityResults}
+            isSearching={isSearching}
           />
 
           <Sidebar
