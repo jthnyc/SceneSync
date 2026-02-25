@@ -3,41 +3,9 @@
  * Loads the pre-analyzed royalty-free track library and finds the closest
  * matches to a query feature vector using cosine similarity.
  */
+import { FeatureVector } from '../workers/featureExtraction.types';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export interface FeatureVector {
-  rms: [number, number, number];
-  zcr: [number, number, number];
-  centroid: [number, number, number];
-  spread: [number, number, number];
-  flatness: [number, number, number];
-  mfcc_1: [number, number, number];
-  mfcc_2: [number, number, number];
-  mfcc_3: [number, number, number];
-  mfcc_4: [number, number, number];
-  mfcc_5: [number, number, number];
-  mfcc_6: [number, number, number];
-  mfcc_7: [number, number, number];
-  mfcc_8: [number, number, number];
-  mfcc_9: [number, number, number];
-  mfcc_10: [number, number, number];
-  mfcc_11: [number, number, number];
-  mfcc_12: [number, number, number];
-  mfcc_13: [number, number, number];
-  chroma_1: [number, number, number];
-  chroma_2: [number, number, number];
-  chroma_3: [number, number, number];
-  chroma_4: [number, number, number];
-  chroma_5: [number, number, number];
-  chroma_6: [number, number, number];
-  chroma_7: [number, number, number];
-  chroma_8: [number, number, number];
-  chroma_9: [number, number, number];
-  chroma_10: [number, number, number];
-  chroma_11: [number, number, number];
-  chroma_12: [number, number, number];
-}
+export type { FeatureVector }; // re-export so existing imports from here still work
 
 export interface LibraryTrack {
   file: string;
