@@ -30,3 +30,11 @@ yarn-error.log*
 
 # OS files
 Thumbs.db
+
+# script files 
+data/
+!public/data/
+!public/data/feature_vectors.json
+scripts/feature_vectors.json
+__pycache__/
+*.pyc
