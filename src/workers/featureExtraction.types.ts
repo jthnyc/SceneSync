@@ -1,10 +1,3 @@
-// src/workers/featureExtraction.types.ts
-//
-// Single source of truth for types and constants shared between
-// the main thread (featureExtraction.ts) and the worker
-// (featureExtraction.worker.ts). Neither file defines these
-// independently anymore.
-
 export interface FeatureTimeSeries {
   rms: number[];
   zcr: number[];
@@ -14,38 +7,66 @@ export interface FeatureTimeSeries {
   sampleRate: number;
 }
 
-// HOP_SIZE is also imported by FeatureVisualizations to convert
-// frame indices → seconds. Keep it here so both the worker and
-// the visualizer read from the same value.
 export const HOP_SIZE = 512;
 export const BUFFER_SIZE = 2048;
 
-// ---------------------------------------------------------------------------
-// Worker message protocol
-// ---------------------------------------------------------------------------
-// Main → Worker: one message type to kick off extraction.
-// The signal buffer is transferred (zero-copy) not copied.
+// ── Feature vector schema (locked Feb 23, 2026) ───────────────────────────
+// 7 features × 3 percentile snapshots (p25/p50/p75) = 90 values per track.
+// Moving this here so the worker can construct it and similarityService
+// can import it — neither owns it exclusively.
+
+export interface FeatureVector {
+  rms:      [number, number, number];
+  zcr:      [number, number, number];
+  centroid: [number, number, number];
+  spread:   [number, number, number];
+  flatness: [number, number, number];
+  mfcc_1:  [number, number, number];
+  mfcc_2:  [number, number, number];
+  mfcc_3:  [number, number, number];
+  mfcc_4:  [number, number, number];
+  mfcc_5:  [number, number, number];
+  mfcc_6:  [number, number, number];
+  mfcc_7:  [number, number, number];
+  mfcc_8:  [number, number, number];
+  mfcc_9:  [number, number, number];
+  mfcc_10: [number, number, number];
+  mfcc_11: [number, number, number];
+  mfcc_12: [number, number, number];
+  mfcc_13: [number, number, number];
+  chroma_1:  [number, number, number];
+  chroma_2:  [number, number, number];
+  chroma_3:  [number, number, number];
+  chroma_4:  [number, number, number];
+  chroma_5:  [number, number, number];
+  chroma_6:  [number, number, number];
+  chroma_7:  [number, number, number];
+  chroma_8:  [number, number, number];
+  chroma_9:  [number, number, number];
+  chroma_10: [number, number, number];
+  chroma_11: [number, number, number];
+  chroma_12: [number, number, number];
+}
+
+// ── Worker message protocol ───────────────────────────────────────────────
 
 export interface ExtractMessage {
   type: 'EXTRACT';
-  signal: Float32Array; // transferred, not copied
+  signal: Float32Array;
   sampleRate: number;
   duration: number;
 }
 
-// Worker → Main: three possible message types.
-
 export interface ProgressMessage {
   type: 'PROGRESS';
-  // 0–100, representing progress through the 8 feature passes
   percent: number;
-  // Human-readable label shown in the UI progress bar
   stage: string;
 }
 
 export interface ResultMessage {
   type: 'RESULT';
-  features: number[];
+  features: number[];        // flat 44-value vector — kept for classifier
+  featureVector: FeatureVector; // percentile snapshot — for similarity search
   timeSeries: FeatureTimeSeries;
 }
 

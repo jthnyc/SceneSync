@@ -1,5 +1,3 @@
-// src/utils/featureExtraction.ts
-//
 // Thin wrapper. All extraction logic now lives in the worker.
 // This file's only job is to:
 //   1. Grab the raw signal from the AudioBuffer (must happen on main thread
@@ -17,6 +15,7 @@ import {
   HOP_SIZE,
   BUFFER_SIZE,
 } from '../workers/featureExtraction.types';
+import { FeatureVector } from '../workers/featureExtraction.types';
 
 // Re-export so existing imports from this file continue to work unchanged.
 // FeatureVisualizations imports HOP_SIZE from here — keeping that working.
@@ -26,7 +25,7 @@ export { HOP_SIZE, BUFFER_SIZE };
 export const extractBrowserCompatibleFeatures = (
   audioBuffer: AudioBuffer,
   onProgress?: (percent: number, stage: string) => void
-): Promise<{ features: number[]; timeSeries: FeatureTimeSeries }> => {
+): Promise<{ features: number[]; featureVector: FeatureVector; timeSeries: FeatureTimeSeries }> => {
   return new Promise((resolve, reject) => {
     // Spawn a fresh worker for each extraction. Workers are cheap to create
     // and this avoids any state leaking between tracks.
@@ -52,7 +51,11 @@ export const extractBrowserCompatibleFeatures = (
 
         case 'RESULT':
           worker.terminate();
-          resolve({ features: msg.features, timeSeries: msg.timeSeries });
+          resolve({
+            features: msg.features,
+            featureVector: msg.featureVector,  // ← add this
+            timeSeries: msg.timeSeries,
+          });
           break;
 
         case 'ERROR':

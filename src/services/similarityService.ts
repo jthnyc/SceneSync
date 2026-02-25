@@ -3,41 +3,9 @@
  * Loads the pre-analyzed royalty-free track library and finds the closest
  * matches to a query feature vector using cosine similarity.
  */
+import { FeatureVector } from '../workers/featureExtraction.types';
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export interface FeatureVector {
-  rms: [number, number, number];
-  zcr: [number, number, number];
-  centroid: [number, number, number];
-  spread: [number, number, number];
-  flatness: [number, number, number];
-  mfcc_1: [number, number, number];
-  mfcc_2: [number, number, number];
-  mfcc_3: [number, number, number];
-  mfcc_4: [number, number, number];
-  mfcc_5: [number, number, number];
-  mfcc_6: [number, number, number];
-  mfcc_7: [number, number, number];
-  mfcc_8: [number, number, number];
-  mfcc_9: [number, number, number];
-  mfcc_10: [number, number, number];
-  mfcc_11: [number, number, number];
-  mfcc_12: [number, number, number];
-  mfcc_13: [number, number, number];
-  chroma_1: [number, number, number];
-  chroma_2: [number, number, number];
-  chroma_3: [number, number, number];
-  chroma_4: [number, number, number];
-  chroma_5: [number, number, number];
-  chroma_6: [number, number, number];
-  chroma_7: [number, number, number];
-  chroma_8: [number, number, number];
-  chroma_9: [number, number, number];
-  chroma_10: [number, number, number];
-  chroma_11: [number, number, number];
-  chroma_12: [number, number, number];
-}
+export type { FeatureVector };
 
 export interface LibraryTrack {
   file: string;
@@ -46,16 +14,12 @@ export interface LibraryTrack {
 
 export interface SimilarityResult {
   file: string;
-  score: number;          // cosine similarity, 0–1 (higher = closer match)
-  features: FeatureVector; // full vector — needed for Phase 3 explanation layer
+  score: number;
+  features: FeatureVector;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────
 
-/**
- * Flatten a FeatureVector into a single array of 90 numbers.
- * Order must be consistent between query and library vectors.
- */
 function flatten(features: FeatureVector): number[] {
   return [
     ...features.rms,
@@ -63,126 +27,128 @@ function flatten(features: FeatureVector): number[] {
     ...features.centroid,
     ...features.spread,
     ...features.flatness,
-    ...features.mfcc_1,
-    ...features.mfcc_2,
-    ...features.mfcc_3,
-    ...features.mfcc_4,
-    ...features.mfcc_5,
-    ...features.mfcc_6,
-    ...features.mfcc_7,
-    ...features.mfcc_8,
-    ...features.mfcc_9,
-    ...features.mfcc_10,
-    ...features.mfcc_11,
-    ...features.mfcc_12,
-    ...features.mfcc_13,
-    ...features.chroma_1,
-    ...features.chroma_2,
-    ...features.chroma_3,
-    ...features.chroma_4,
-    ...features.chroma_5,
-    ...features.chroma_6,
-    ...features.chroma_7,
-    ...features.chroma_8,
-    ...features.chroma_9,
-    ...features.chroma_10,
-    ...features.chroma_11,
-    ...features.chroma_12,
+    // MFCCs excluded — DCT convention mismatch between Meyda and librosa
+    // produces sign+scale incompatibility that z-score cannot resolve.
+    // Re-include once extraction parameters are matched exactly. (Phase 3)
+    ...features.chroma_1,  ...features.chroma_2,  ...features.chroma_3,
+    ...features.chroma_4,  ...features.chroma_5,  ...features.chroma_6,
+    ...features.chroma_7,  ...features.chroma_8,  ...features.chroma_9,
+    ...features.chroma_10, ...features.chroma_11, ...features.chroma_12,
   ];
 }
 
-/**
- * Cosine similarity between two vectors.
- * Returns a value between 0 (completely different) and 1 (identical).
- */
 function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0;
-  let magA = 0;
-  let magB = 0;
-
+  let dot = 0, magA = 0, magB = 0;
   for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
+    dot  += a[i] * b[i];
     magA += a[i] * a[i];
     magB += b[i] * b[i];
   }
-
   const magnitude = Math.sqrt(magA) * Math.sqrt(magB);
-  if (magnitude === 0) return 0;
-
-  return dot / magnitude;
+  return magnitude === 0 ? 0 : dot / magnitude;
 }
 
-// ── Service ───────────────────────────────────────────────────────────────────
+/**
+ * Compute per-dimension mean and standard deviation across all library vectors.
+ * Used to z-score normalize before cosine comparison, which absorbs the MFCC
+ * sign flip and scale differences between Meyda and librosa extraction.
+ */
+function computeNormStats(
+  vectors: number[][]
+): { means: number[]; stds: number[] } {
+  const dim = vectors[0].length;
+  const means = new Array(dim).fill(0);
+  const stds  = new Array(dim).fill(0);
+
+  // Pass 1 — means
+  for (const vec of vectors) {
+    for (let i = 0; i < dim; i++) means[i] += vec[i];
+  }
+  for (let i = 0; i < dim; i++) means[i] /= vectors.length;
+
+  // Pass 2 — standard deviations
+  for (const vec of vectors) {
+    for (let i = 0; i < dim; i++) {
+      stds[i] += (vec[i] - means[i]) ** 2;
+    }
+  }
+  for (let i = 0; i < dim; i++) {
+    stds[i] = Math.sqrt(stds[i] / vectors.length);
+  }
+
+  return { means, stds };
+}
+
+/**
+ * Apply z-score normalization to a vector.
+ * Dimensions with std ≈ 0 (constant across library) are zeroed out —
+ * they carry no discriminative information anyway.
+ */
+function zScore(
+  vec: number[],
+  means: number[],
+  stds: number[],
+  EPS = 1e-8
+): number[] {
+  return vec.map((v, i) =>
+    stds[i] < EPS ? 0 : (v - means[i]) / stds[i]
+  );
+}
+
+// ── Service ───────────────────────────────────────────────────────────────
 
 class SimilarityService {
-  private library: LibraryTrack[] | null = null;
+  private library: LibraryTrack[]    | null = null;
+  private normalizedVecs: number[][] | null = null;
+  private normMeans: number[]        | null = null;
+  private normStds:  number[]        | null = null;
   private isLoaded = false;
 
-  /**
-   * Load the curated track library from public/data/feature_vectors.json.
-   * Lazy — only fetches on first call, then caches in memory.
-   */
   async loadLibrary(libraryPath = '/data/feature_vectors.json'): Promise<void> {
     if (this.isLoaded) return;
 
-    try {
-      console.log('Loading similarity library from:', libraryPath);
-      const response = await fetch(libraryPath);
+    console.log('Loading similarity library from:', libraryPath);
+    const response = await fetch(libraryPath);
+    if (!response.ok) throw new Error(`Failed to fetch library: ${response.status}`);
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch library: ${response.status}`);
-      }
+    this.library = await response.json();
+    console.log(`✅ Similarity library loaded: ${this.library!.length} tracks`);
 
-      this.library = await response.json();
-      this.isLoaded = true;
-      console.log(`✅ Similarity library loaded: ${this.library!.length} tracks`);
-    } catch (error) {
-      console.error('Failed to load similarity library:', error);
-      throw new Error(`Library loading failed: ${error}`);
-    }
+    const rawVecs = this.library!.map(t => flatten(t.features));
+    const { means, stds } = computeNormStats(rawVecs);
+
+    this.normMeans      = means;
+    this.normStds       = stds;
+    this.normalizedVecs = rawVecs.map(v => zScore(v, means, stds));
+
+    console.log('✅ Normalization stats computed across 90 dimensions');
+    this.isLoaded = true;
   }
 
-  /**
-   * Find the closest matching tracks in the library to a query feature vector.
-   * Returns top N results sorted by similarity score (highest first).
-   */
   async findSimilar(
     queryFeatures: FeatureVector,
     topN = 5
   ): Promise<SimilarityResult[]> {
     if (!this.isLoaded) await this.loadLibrary();
-    if (!this.library || this.library.length === 0) {
-      throw new Error('Library is empty or not loaded');
+    if (!this.library || !this.normalizedVecs || !this.normMeans || !this.normStds) {
+      throw new Error('Library not loaded');
     }
 
-    const queryVector = flatten(queryFeatures);
+    // Normalize the query vector with the same stats as the library
+    const queryVec        = flatten(queryFeatures);
+    const queryNormalized = zScore(queryVec, this.normMeans, this.normStds);
 
-    const results: SimilarityResult[] = this.library.map((track) => ({
-      file: track.file,
-      score: cosineSimilarity(queryVector, flatten(track.features)),
+    const results: SimilarityResult[] = this.library.map((track, i) => ({
+      file:     track.file,
+      score:    cosineSimilarity(queryNormalized, this.normalizedVecs![i]),
       features: track.features,
     }));
 
-    // Sort by score descending, return top N
-    return results
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topN);
+    return results.sort((a, b) => b.score - a.score).slice(0, topN);
   }
 
-  /**
-   * Check if the library is loaded
-   */
-  isLibraryLoaded(): boolean {
-    return this.isLoaded;
-  }
-
-  /**
-   * Return the number of tracks in the library
-   */
-  getLibrarySize(): number {
-    return this.library?.length ?? 0;
-  }
+  isLibraryLoaded(): boolean { return this.isLoaded; }
+  getLibrarySize():  number  { return this.library?.length ?? 0; }
 }
 
-// Singleton instance — matches pattern of mlModelService and audioStorage
 export const similarityService = new SimilarityService();

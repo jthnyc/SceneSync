@@ -10,9 +10,11 @@ import {
   SkeletonCard,
   ErrorDisplay,
   AudioPlayer,
+  SimilarityResults
 } from './';
 import type { ErrorState } from '../hooks/useScenePrediction';
 import type { AnalyzedTrack } from '../types/audio';
+import type { SimilarityResult } from '../services/similarityService';
 import { SPLIT_THRESHOLD } from '../constants/prediction';
 
 interface MainContentProps {
@@ -25,6 +27,8 @@ interface MainContentProps {
   hasError: boolean;
   error: ErrorState | null;
   showResults: boolean;
+  similarityResults: SimilarityResult[] | null;
+  isSearching: boolean;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFileDrop: (e: React.DragEvent) => void;
   onClearFile: () => void;
@@ -42,6 +46,8 @@ const MainContent: React.FC<MainContentProps> = ({
   hasError,
   error,
   showResults,
+  similarityResults, 
+  isSearching,     
   onFileChange,
   onFileDrop,
   onClearFile,
@@ -135,6 +141,14 @@ const MainContent: React.FC<MainContentProps> = ({
             fileSize={currentTrack.fileSize}
           />
         </div>
+      )}
+
+      {/* Similarity search results */}
+      {(isSearching || (similarityResults && similarityResults.length > 0)) && !error && (
+        <SimilarityResults
+          results={similarityResults ?? []}
+          isSearching={isSearching}
+        />
       )}
 
       {/* Loading state for history audio */}
