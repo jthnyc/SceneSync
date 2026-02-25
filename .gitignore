@@ -36,5 +36,7 @@ data/
 !public/data/
 !public/data/feature_vectors.json
 scripts/feature_vectors.json
+scripts/curated_fma.json
+scripts/musopen_feature_vectors.json
 __pycache__/
 *.pyc

@@ -27,11 +27,9 @@ function flatten(features: FeatureVector): number[] {
     ...features.centroid,
     ...features.spread,
     ...features.flatness,
-    ...features.mfcc_1,  ...features.mfcc_2,  ...features.mfcc_3,
-    ...features.mfcc_4,  ...features.mfcc_5,  ...features.mfcc_6,
-    ...features.mfcc_7,  ...features.mfcc_8,  ...features.mfcc_9,
-    ...features.mfcc_10, ...features.mfcc_11, ...features.mfcc_12,
-    ...features.mfcc_13,
+    // MFCCs excluded — DCT convention mismatch between Meyda and librosa
+    // produces sign+scale incompatibility that z-score cannot resolve.
+    // Re-include once extraction parameters are matched exactly. (Phase 3)
     ...features.chroma_1,  ...features.chroma_2,  ...features.chroma_3,
     ...features.chroma_4,  ...features.chroma_5,  ...features.chroma_6,
     ...features.chroma_7,  ...features.chroma_8,  ...features.chroma_9,
@@ -116,7 +114,6 @@ class SimilarityService {
     this.library = await response.json();
     console.log(`✅ Similarity library loaded: ${this.library!.length} tracks`);
 
-    // Pre-compute flat vectors and normalization stats once at load time
     const rawVecs = this.library!.map(t => flatten(t.features));
     const { means, stds } = computeNormStats(rawVecs);
 

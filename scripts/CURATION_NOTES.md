@@ -33,3 +33,19 @@ The 6-track sample clustered around medium energy, medium tempo, medium activity
 - Single summary value per feature loses arc information (captured in vector, not in label)
 - Centroid is pulled toward bass-heavy frequencies even when the perceptual lead is a bright instrument (e.g. piano over bass)
 - Orchestral arrangements with wide frequency spread tend to read darker and noisier than they sound
+
+## Known issue: MFCC DCT convention mismatch (pinned Phase 3)
+
+Meyda and librosa produce MFCC values with opposite signs and ~12× scale
+difference. Cause: different DCT type and/or normalization convention.
+Attempted fix: n_mels=26, norm=None — resolved scale partially but not sign.
+
+To fix properly:
+1. Write a test script that runs identical audio through both pipelines
+   and compares raw frame-level MFCC values (before percentile reduction)
+2. Identify exact relationship between outputs
+3. Apply correction in extract_features.py
+4. Re-extract library
+
+MFCCs currently excluded from similarity comparison (flatten() in
+similarityService.ts). 51/90 dimensions active.
