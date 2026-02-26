@@ -249,6 +249,7 @@ self.onmessage = (e: MessageEvent<WorkerInboundMessage>) => {
       featureVector,
       timeSeries,
     };
+
     self.postMessage(resultMsg);
 
   } catch (err) {
