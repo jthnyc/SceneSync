@@ -50,8 +50,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
 
 /**
  * Compute per-dimension mean and standard deviation across all library vectors.
- * Used to z-score normalize before cosine comparison, which absorbs the MFCC
- * sign flip and scale differences between Meyda and librosa extraction.
+ * Used to z-score normalize before cosine comparison.
  */
 function computeNormStats(
   vectors: number[][]
@@ -121,7 +120,7 @@ class SimilarityService {
     this.normStds       = stds;
     this.normalizedVecs = rawVecs.map(v => zScore(v, means, stds));
 
-    console.log('✅ Normalization stats computed across 90 dimensions');
+    console.log('✅ Normalization stats computed across 51 active dimensions (MFCCs excluded)');
     this.isLoaded = true;
   }
 
