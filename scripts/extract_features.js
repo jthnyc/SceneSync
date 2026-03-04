@@ -18,8 +18,7 @@
  * IMPORTANT — extraction parameters:
  *   BUFFER_SIZE and N_FFT are both 2048. They must always match the browser.
  *   Never change either value without re-extracting the full library.
- *   HOP_LENGTH 256 is intentionally smaller than BUFFER_SIZE — more frames,
- *   more stable percentile estimates.
+ *   HOP_LENGTH = 512; // Must match browser HOP_SIZE in featureExtraction.types.ts
  */
 
 'use strict';
@@ -34,7 +33,7 @@ const Meyda = require('meyda');
 
 const SAMPLE_RATE  = 44100;
 const BUFFER_SIZE  = 2048;  // FFT window. Matches browser BUFFER_SIZE. See note above.
-const HOP_LENGTH   = 256;   // Hop length. Matches browser. Do not increase — reduces frame count.
+const HOP_LENGTH   = 512;   // Hop length. Matches browser. Do not increase — reduces frame count.
 const N_MFCC       = 13;
 const N_CHROMA     = 12;
 const PERCENTILES  = [25, 50, 75];
@@ -42,7 +41,8 @@ const MIN_FRAMES   = 10;    // Skip tracks with fewer frames than this (too shor
 const SAVE_EVERY   = 50;    // Checkpoint interval (tracks)
 
 // Configure Meyda globally before any extract() calls
-Meyda.bufferSize = BUFFER_SIZE;
+// Do NOT set Meyda.bufferSize here — browser worker leaves it at default (512)
+// and passes bufferSize per-call. We must match that behavior exactly.
 Meyda.sampleRate = SAMPLE_RATE;
 Meyda.numberOfMFCCCoefficients = N_MFCC;
 
@@ -172,7 +172,7 @@ function extractFeatures(filePath) {
     rms:              [],
     zcr:              [],
     spectralCentroid: [],
-    spectralBandwidth:[],
+    spectralSpread:[],
     spectralFlatness: [],
     mfcc:  Array.from({ length: N_MFCC },   () => []),
     chroma:Array.from({ length: N_CHROMA }, () => []),
@@ -189,7 +189,10 @@ function extractFeatures(filePath) {
 
     let feats;
     try {
-      feats = Meyda.extract(MEYDA_FEATURES, signal);
+      feats = Meyda.extract(MEYDA_FEATURES, signal, {
+            sampleRate: SAMPLE_RATE,
+            bufferSize: BUFFER_SIZE,
+        });
     } catch {
       // Bad frame — skip silently. Rare, doesn't affect percentile estimates.
       continue;
@@ -201,7 +204,7 @@ function extractFeatures(filePath) {
     if (feats.rms               != null) acc.rms.push(feats.rms);
     if (feats.zcr               != null) acc.zcr.push(feats.zcr);
     if (feats.spectralCentroid  != null) acc.spectralCentroid.push(feats.spectralCentroid);
-    if (feats.spectralSpread != null) acc.spectralBandwidth.push(feats.spectralSpread);
+    if (feats.spectralSpread != null) acc.spectralSpread.push(feats.spectralSpread);
     if (feats.spectralFlatness  != null) acc.spectralFlatness.push(feats.spectralFlatness);
 
     // Vector features — push per-coefficient
@@ -226,7 +229,7 @@ function extractFeatures(filePath) {
   vector.rms      = percentileSnapshot(acc.rms);
   vector.zcr      = percentileSnapshot(acc.zcr);
   vector.centroid = percentileSnapshot(acc.spectralCentroid);
-  vector.spread   = percentileSnapshot(acc.spectralBandwidth);
+  vector.spread   = percentileSnapshot(acc.spectralSpread);
   vector.flatness = percentileSnapshot(acc.spectralFlatness);
 
   // mfcc_1 … mfcc_13

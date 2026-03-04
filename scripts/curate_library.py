@@ -109,6 +109,8 @@ def diversity_sample(track_ids: list, feature_map: dict, n: int) -> list:
         if tid not in feature_map:
             continue
         rms, centroid, flatness = get_acoustic_summary(feature_map[tid])
+        if rms is None or centroid is None or flatness is None:
+            continue
         # Normalise each feature to [0,1] range roughly before summing
         # These are rough scale factors based on real p25/p75 distribution
         norm_rms      = rms / 0.2          # typical max ~0.2
