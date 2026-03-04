@@ -1,64 +1,83 @@
 """
 test_mfcc_alignment.py
 
-Compares raw frame-level MFCC values between librosa and what Meyda
-would produce for the same audio file. Used to identify the exact
-DCT convention difference before applying a correction.
+Regression test: verifies that Node.js extractor (Meyda) MFCC values
+align with browser (Meyda) output for the same audio file.
+
+Now that extraction runs Meyda directly in Node.js, Python is no longer
+in the comparison. This script reads the Node.js-extracted feature vector
+for a test track and prints its MFCC percentiles for side-by-side comparison
+against browser output.
+
+Test tracks: 019412 and 030521 (used throughout MFCC alignment diagnosis)
 
 Usage:
-    python scripts/test_mfcc_alignment.py path/to/test_track.mp3
-
-Pick a short track (30s is enough). Use the same track in the browser
-diagnostic to compare Meyda output side by side.
+    python scripts/test_mfcc_alignment.py
 
 Run from project root (SceneSync/).
+
+How to use:
+    1. Run node scripts/extract_features.js fma first (or ensure
+       scripts/feature_vectors.json is up to date)
+    2. Run this script — prints MFCC p25/p50/p75 for both test tracks
+    3. Drop the same files in the browser and log featureVector.mfcc_1
+       through mfcc_3 from the RESULT message in the worker
+    4. Compare — values should be very close (small differences are
+       acceptable and expected from AudioContext vs ffmpeg decoding;
+       sign flips or order-of-magnitude differences are not)
 """
 
-import sys
-import numpy as np
-import librosa
+import json
 
-SAMPLE_RATE = 44100
-N_FFT       = 512
-HOP_LENGTH  = 256
-N_MFCC      = 13
+FEATURE_VECTORS_PATH = "scripts/feature_vectors.json"
+TEST_TRACK_IDS       = [19412, 30521]  # 019412 and 030521
+N_MFCC_TO_PRINT      = 3              # print first 3 coefficients — enough to catch sign flips
 
-def run(file_path):
-    print(f"Loading: {file_path}")
-    y, sr = librosa.load(file_path, sr=SAMPLE_RATE, mono=True, duration=30)
+def track_id_from_path(filepath: str) -> int:
+    filename = filepath.split("/")[-1]
+    return int(filename.replace(".mp3", ""))
 
-    print("\n── Default librosa (current extraction params) ──")
-    mfcc_default = librosa.feature.mfcc(
-        y=y, sr=sr, n_mfcc=N_MFCC, n_fft=N_FFT, hop_length=HOP_LENGTH
-    )
-    for i in range(3):  # first 3 coefficients
-        frames = mfcc_default[i]
-        print(f"  mfcc_{i+1}: mean={frames.mean():.2f}, std={frames.std():.2f}, "
-              f"p25={np.percentile(frames,25):.2f}, p50={np.percentile(frames,50):.2f}, "
-              f"p75={np.percentile(frames,75):.2f}")
+def run():
+    print("Loading feature vectors...")
+    with open(FEATURE_VECTORS_PATH, "r") as f:
+        data = json.load(f)
 
-    print("\n── n_mels=26, norm=None (attempted fix) ──")
-    mfcc_fix1 = librosa.feature.mfcc(
-        y=y, sr=sr, n_mfcc=N_MFCC, n_fft=N_FFT, hop_length=HOP_LENGTH,
-        n_mels=26, norm=None
-    )
-    for i in range(3):
-        frames = mfcc_fix1[i]
-        print(f"  mfcc_{i+1}: mean={frames.mean():.2f}, std={frames.std():.2f}, "
-              f"p25={np.percentile(frames,25):.2f}, p50={np.percentile(frames,50):.2f}, "
-              f"p75={np.percentile(frames,75):.2f}")
+    # Index by track ID
+    track_map = {}
+    for entry in data:
+        try:
+            tid = track_id_from_path(entry["file"])
+            track_map[tid] = entry
+        except Exception:
+            continue
 
-    print("\n── Raw frame values (first 5 frames), mfcc_1 only ──")
-    print(f"  default: {mfcc_default[0][:5].tolist()}")
-    print(f"  fix1:    {mfcc_fix1[0][:5].tolist()}")
+    print(f"  {len(track_map)} tracks loaded\n")
 
-    print("\n── Next step ──")
-    print("Drop the same file in the browser and log featureVector.mfcc_1")
-    print("Compare the p25/p50/p75 values above against the browser output")
-    print("The relationship between them tells you what correction to apply")
+    for tid in TEST_TRACK_IDS:
+        if tid not in track_map:
+            print(f"⚠️  Track {tid:06d} not found in feature_vectors.json")
+            print(f"   Re-run: node scripts/extract_features.js fma\n")
+            continue
+
+        entry    = track_map[tid]
+        features = entry["features"]
+
+        print(f"── Track {tid:06d}: {entry['file']} ──")
+        for i in range(1, N_MFCC_TO_PRINT + 1):
+            key = f"mfcc_{i}"
+            p25, p50, p75 = features[key]
+            print(f"  {key}: p25={p25:.2f}  p50={p50:.2f}  p75={p75:.2f}")
+        print()
+
+    print("── Next step ──")
+    print("Drop each test track in the browser and open the console.")
+    print("In featureExtraction.worker.ts, the RESULT message contains featureVector.")
+    print("Log featureVector.mfcc_1 through mfcc_3 and compare p25/p50/p75 above.")
+    print()
+    print("PASS:  values are close (within ~5–10%) — AudioContext vs ffmpeg")
+    print("       resampling differences are normal at this scale")
+    print("FAIL:  sign flip on any coefficient, or ratio differs across coefficients")
+    print("       (e.g. mfcc_1 ratio 0.98, mfcc_3 ratio -0.30) — extraction mismatch")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python scripts/test_mfcc_alignment.py path/to/track.mp3")
-        sys.exit(1)
-    run(sys.argv[1])
+    run()
