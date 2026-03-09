@@ -15,5 +15,6 @@ export { Skeleton, SkeletonText, SkeletonCard } from './Skeleton';
 export { default as AudioPlayer } from './AudioPlayer';
 export { PrivacyNotice } from './PrivacyNotice';
 export { default as SimilarityResults } from './SimilarityResults';
+export { default as TrackExplanation } from './TrackExplanation';
 
 // Note: Toast is intentionally not exported here since using react-hot-toast

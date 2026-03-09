@@ -4,11 +4,15 @@
 // Kept separate from useScenePrediction so the classifier flow stays intact.
 // Both hooks share the same extraction pipeline — useScenePrediction then
 // hands off to the TF.js classifier; this one hands off to similarityService.
+//
+// Phase 3b: featureVector is now stored in state and exposed in the return
+// value so TrackExplanation can access it for the "What am I hearing?" button.
 
 import { useState, useCallback } from 'react';
 import { extractBrowserCompatibleFeatures } from '../utils/featureExtraction';
 import { similarityService, SimilarityResult } from '../services/similarityService';
 import { getErrorMessage } from '../utils/fileValidation';
+import { FeatureVector } from '../workers/featureExtraction.types';
 
 export interface SimilarityProgressState {
   progress: number;
@@ -23,6 +27,7 @@ export interface SimilarityErrorState {
 export const useSimilaritySearch = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<SimilarityResult[] | null>(null);
+  const [featureVector, setFeatureVector] = useState<FeatureVector | null>(null); // Phase 3b
   const [error, setError] = useState<SimilarityErrorState | null>(null);
   const [progressState, setProgressState] = useState<SimilarityProgressState>({
     progress: 0,
@@ -33,6 +38,7 @@ export const useSimilaritySearch = () => {
     setIsSearching(true);
     setError(null);
     setResults(null);
+    setFeatureVector(null); // Phase 3b: clear previous explanation data on new upload
     setProgressState({ progress: 0, stage: 'Loading audio...' });
 
     try {
@@ -45,7 +51,7 @@ export const useSimilaritySearch = () => {
       await audioContext.close();
 
       setProgressState({ progress: 20, stage: 'Analyzing audio...' });
-      const { featureVector } = await extractBrowserCompatibleFeatures(
+      const { featureVector: extractedVector } = await extractBrowserCompatibleFeatures(
         audioBuffer,
         (workerPercent: number, workerStage: string) => {
           const mapped = 20 + Math.round(workerPercent * 0.6);
@@ -53,8 +59,10 @@ export const useSimilaritySearch = () => {
         }
       );
 
+      setFeatureVector(extractedVector); // Phase 3b: store for explanation layer
+
       setProgressState({ progress: 85, stage: 'Searching library...' });
-      const matches = await similarityService.findSimilar(featureVector, 5);
+      const matches = await similarityService.findSimilar(extractedVector, 5);
 
       setProgressState({ progress: 100, stage: 'Done!' });
       setResults(matches);
@@ -73,12 +81,14 @@ export const useSimilaritySearch = () => {
 
   const clearResults = useCallback(() => {
     setResults(null);
+    setFeatureVector(null); // Phase 3b: clear explanation data alongside results
     setError(null);
   }, []);
 
   return {
     isSearching,
     results,
+    featureVector,  // Phase 3b: consumed by TrackExplanation via parent component
     error,
     progressState,
     findSimilar,

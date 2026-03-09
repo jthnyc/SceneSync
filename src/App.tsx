@@ -53,6 +53,7 @@ function App() {
   const {
     isSearching,
     results: similarityResults,
+    featureVector: referenceFeatureVector,
     findSimilar,
   } = useSimilaritySearch();
 
@@ -356,9 +357,7 @@ function App() {
     const encodedKey = r2Key.split('/').map(segment => encodeURIComponent(segment)).join('/');
     const r2Url = `${baseUrl}/${encodedKey}`;
     
-    const features = result.features && Array.isArray(result.features) 
-      ? flattenToFeatureVector(result.features) 
-      : undefined;
+    const features = result.features ?? undefined;
     
     setActiveTrack({
       type: 'match',
@@ -426,6 +425,7 @@ function App() {
             isSearching={isSearching}
             activeTrack={activeTrack}
             referenceFeatures={referenceFeatures}
+            featureVector={referenceFeatureVector}
             onSelectMatch={handleSelectMatch}
             onClearActiveTrack={handleClearActiveTrack}
             onShowReference={handleShowReference}
