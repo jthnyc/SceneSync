@@ -129,7 +129,7 @@ const MainContent: React.FC<MainContentProps> = ({
 
     window.addEventListener('showReference', handleShowReferenceEvent);
     return () => window.removeEventListener('showReference', handleShowReferenceEvent);
-  }, []); // Empty array since onShowReference is stable
+  }, [onShowReference]); // Empty array since onShowReference is stable
 
   const mobileResultLabel = (() => {
     if (!displayResult) return null;

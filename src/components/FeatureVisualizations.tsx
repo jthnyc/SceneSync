@@ -51,16 +51,6 @@ const tooltipStyle = {
   contentStyle: { backgroundColor: '#1F2937', border: '1px solid #374151' },
   labelStyle: { color: '#9CA3AF' },
 };
-const xAxisProps = {
-  stroke: '#9CA3AF',
-  tickCount: 5,
-  label: {
-    value: 'Distribution',
-    position: 'insideBottom' as const,
-    offset: -5,
-    fill: '#9CA3AF',
-  },
-};
 
 export const FeatureVisualizations: React.FC<FeatureVisualizationsProps> = ({ 
   features,
