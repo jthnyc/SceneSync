@@ -15,7 +15,10 @@ import {
 import type { ErrorState } from '../hooks/useScenePrediction';
 import type { AnalyzedTrack } from '../types/audio';
 import type { SimilarityResult } from '../services/similarityService';
+import type { TrackDisplay } from '../utils/parseTrackDisplay';
+import type { FeatureVector } from '../workers/featureExtraction.types';
 import { SPLIT_THRESHOLD } from '../constants/prediction';
+import { flattenToFeatureVector } from '../utils/featureVectorUtils';
 
 interface MainContentProps {
   selectedFile: File | null;
@@ -34,6 +37,18 @@ interface MainContentProps {
   onClearFile: () => void;
   onRetry?: () => void;
   onDismissError?: () => void;
+  // Props for active track management
+  activeTrack: {
+    type: 'reference' | 'match';
+    file: File | string;
+    features?: FeatureVector;
+    metadata: TrackDisplay;
+  } | null;
+  referenceFeatures: FeatureVector | null;
+  onSelectMatch: (result: SimilarityResult) => void;
+  onClearActiveTrack: () => void;
+  onShowReference?: (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => void;
+  selectedMatchFile?: string;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -53,10 +68,20 @@ const MainContent: React.FC<MainContentProps> = ({
   onClearFile,
   onRetry,
   onDismissError,
+  activeTrack,
+  referenceFeatures,
+  onSelectMatch,
+  onClearActiveTrack,
+  onShowReference,
+  selectedMatchFile,
 }) => {
   const [historyAudioFile, setHistoryAudioFile] = useState<File | null>(null);
   const [loadingHistoryAudio, setLoadingHistoryAudio] = useState(false);
-
+  const [referenceTrack, setReferenceTrack] = useState<{
+    file: File;
+    features?: FeatureVector;
+    metadata: TrackDisplay;
+  } | null>(null);
   const currentTrack = selectedTrackId
     ? trackHistory.find(t => t.id === selectedTrackId)
     : null;
@@ -84,7 +109,28 @@ const MainContent: React.FC<MainContentProps> = ({
     }
   }, [selectedTrackId, selectedFile, currentTrack]);
 
-  // Determine if the result is a split for the compact mobile badge
+  useEffect(() => {
+    if (activeTrack?.type === 'reference' && activeTrack.file instanceof File) {
+      setReferenceTrack({
+        file: activeTrack.file,
+        features: activeTrack.features,
+        metadata: activeTrack.metadata
+      });
+    }
+  }, [activeTrack]);
+
+  useEffect(() => {
+    const handleShowReferenceEvent = ((event: CustomEvent) => {
+      const track = event.detail;
+      if (onShowReference) {
+        onShowReference(track);
+      }
+    }) as EventListener;
+
+    window.addEventListener('showReference', handleShowReferenceEvent);
+    return () => window.removeEventListener('showReference', handleShowReferenceEvent);
+  }, [onShowReference]); // Empty array since onShowReference is stable
+
   const mobileResultLabel = (() => {
     if (!displayResult) return null;
     const sorted = Object.entries(displayResult.probabilities).sort(([, a], [, b]) => b - a);
@@ -94,11 +140,22 @@ const MainContent: React.FC<MainContentProps> = ({
     return { label: displayResult.sceneType, isSplit };
   })();
 
+  const handleClear = () => {
+    onClearFile();
+    onClearActiveTrack();
+  };
+
+  const handleShowReference = () => {
+    if (referenceTrack) {
+      const event = new CustomEvent('showReference', { detail: referenceTrack });
+      window.dispatchEvent(event);
+    }
+  };
+
   return (
     <div className="lg:col-span-2 lg:order-2 bg-gray-800/50 p-4 sm:p-6 rounded-xl border border-gray-700">
       <h2 className="text-xl font-semibold mb-4 text-primary-400">Upload Audio</h2>
 
-      {/* Upload Zone */}
       <UploadZone
         onFileChange={onFileChange}
         onFileDrop={onFileDrop}
@@ -107,7 +164,6 @@ const MainContent: React.FC<MainContentProps> = ({
         hasError={hasError}
       />
 
-      {/* Error Display */}
       {error && (
         <div className="mt-4">
           <ErrorDisplay
@@ -121,33 +177,39 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Audio Player — newly uploaded file */}
-      {selectedFile && !error && !isPredicting && (
+      {/* Main Audio Player */}
+      {activeTrack && !error && !isPredicting && (
         <div className="mt-4">
           <AudioPlayer
-            audioFile={selectedFile}
-            fileName={selectedFile.name}
-            fileSize={selectedFile.size}
+            audioFile={activeTrack.file}
+            metadata={activeTrack.metadata}
+            activeType={activeTrack.type}
+            onClear={handleClear}
+            hasReference={activeTrack.type === 'match' && referenceTrack !== null}
+            onShowReference={handleShowReference}
           />
         </div>
       )}
 
-      {/* Audio Player — from history (loaded from IndexedDB) */}
-      {!selectedFile && historyAudioFile && currentTrack && !error && !isPredicting && (
+      {/* Legacy player for history audio */}
+      {!activeTrack && !selectedFile && historyAudioFile && currentTrack && !error && !isPredicting && (
         <div className="mt-4">
           <AudioPlayer
             audioFile={historyAudioFile}
             fileName={currentTrack.fileName}
             fileSize={currentTrack.fileSize}
+            onClear={handleClear}
           />
         </div>
       )}
 
-      {/* Similarity search results */}
+      {/* Similarity results */}
       {(isSearching || (similarityResults && similarityResults.length > 0)) && !error && (
         <SimilarityResults
           results={similarityResults ?? []}
           isSearching={isSearching}
+          onSelectMatch={onSelectMatch}
+          activeMatchId={selectedMatchFile}
         />
       )}
 
@@ -206,14 +268,7 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* ── MOBILE ONLY: compact result card ──────────────────────────────────
-          On mobile the sidebar (with full PredictionResults) renders below
-          this column. This card surfaces the headline answer immediately after
-          the player so the user doesn't have to scroll past three charts to
-          find out what the app concluded.
-          lg:hidden ensures it never appears on desktop where the sidebar is
-          already visible in the left column.
-      ──────────────────────────────────────────────────────────────────────── */}
+      {/* Mobile result card */}
       {mobileResultLabel && !isPredicting && !error && (
         <div
           className={`
@@ -272,7 +327,7 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Visualizations — skeleton while predicting */}
+      {/* Visualizations skeleton */}
       {isPredicting && !displayResult && (
         <div className="mt-6 space-y-6">
           <SkeletonCard />
@@ -281,8 +336,8 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Visualizations — actual charts */}
-      {displayResult && !isPredicting && !error && (
+      {/* Visualizations */}
+      {!isPredicting && !error && (activeTrack?.features || displayResult?.features) && (
         <div
           className={`
             mt-6 transition-all duration-200 ease-out
@@ -290,8 +345,17 @@ const MainContent: React.FC<MainContentProps> = ({
           `}
         >
           <FeatureVisualizations
-            timeSeries={displayResult.timeSeries}
-            sceneType={displayResult.sceneType}
+            features={
+              activeTrack?.features 
+                ? activeTrack.features 
+                : (displayResult?.features && Array.isArray(displayResult.features))
+                  ? flattenToFeatureVector(displayResult.features)
+                  : undefined
+            }
+            referenceFeatures={referenceFeatures}
+            showComparison={activeTrack?.type === 'match'}
+            timeSeries={displayResult?.timeSeries}
+            sceneType={displayResult?.sceneType}
           />
         </div>
       )}

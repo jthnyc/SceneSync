@@ -1,11 +1,3 @@
-// Renders the top-N similarity matches after a user drops a reference track.
-// Each card shows: track title, subtitle, source, and similarity score.
-//
-// Score display: cosine similarity is 0–1, but in practice cinematic tracks
-// rarely score below 0.7 against each other — raw numbers feel opaque.
-// We show a percentage bar capped at the top score so relative differences
-// are clear, plus a plain-language label for the top match.
-
 import React from 'react';
 import { Music2 } from 'lucide-react';
 import type { SimilarityResult } from '../services/similarityService';
@@ -14,6 +6,8 @@ import { parseTrackDisplay } from '../utils/parseTrackDisplay';
 interface SimilarityResultsProps {
   results: SimilarityResult[];
   isSearching: boolean;
+  onSelectMatch?: (result: SimilarityResult) => void;
+  activeMatchId?: string;
 }
 
 // Map similarity score to a short human-readable label.
@@ -27,7 +21,12 @@ function matchLabel(score: number, isTop: boolean): string {
   return 'Partial match';
 }
 
-const SimilarityResults: React.FC<SimilarityResultsProps> = ({ results, isSearching }) => {
+const SimilarityResults: React.FC<SimilarityResultsProps> = ({ 
+  results, 
+  isSearching, 
+  onSelectMatch,
+  activeMatchId 
+}) => {
   if (isSearching) {
     return (
       <div className="mt-6 space-y-3">
@@ -50,8 +49,11 @@ const SimilarityResults: React.FC<SimilarityResultsProps> = ({ results, isSearch
 
   if (results.length === 0) return null;
 
-  // Normalize bar widths against the top score so relative differences show
-  const topScore = results[0].score;
+  const handleClick = (result: SimilarityResult) => {
+    if (onSelectMatch) {
+      onSelectMatch(result);
+    }
+  };
 
   return (
     <div className="mt-6">
@@ -62,18 +64,22 @@ const SimilarityResults: React.FC<SimilarityResultsProps> = ({ results, isSearch
       <div className="space-y-3">
         {results.map((result, i) => {
           const { title, subtitle, source } = parseTrackDisplay(result.file);
-          const barWidth = topScore > 0 ? (result.score / topScore) * 100 : 0;
           const isTop = i === 0;
+          const isActive = activeMatchId === result.file;
 
           return (
             <div
               key={result.file}
+              onClick={() => handleClick(result)}
               className={`
-                rounded-lg p-4 transition-colors
-                ${isTop
-                  ? 'bg-primary-900/30 border border-primary-700/50'
-                  : 'bg-gray-700/30 border border-gray-700/30'
+                rounded-lg p-4 transition-all cursor-pointer
+                ${isActive
+                  ? 'bg-primary-900/40 border-2 border-primary-500'
+                  : isTop && !activeMatchId
+                    ? 'bg-primary-900/20 border border-primary-700/30'
+                    : 'bg-gray-700/30 border border-gray-700/30'
                 }
+                ${!isActive ? 'hover:border-gray-500 hover:bg-gray-700/50' : ''}
               `}
             >
               <div className="flex items-start justify-between gap-3">
@@ -101,20 +107,10 @@ const SimilarityResults: React.FC<SimilarityResultsProps> = ({ results, isSearch
                   <div className={`text-xs font-medium ${isTop ? 'text-primary-400' : 'text-gray-400'}`}>
                     {matchLabel(result.score, isTop)}
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
+                  <div className="text-xs text-primary-400 mt-0.5">
                     {(result.score * 100).toFixed(0)}% similar
                   </div>
                 </div>
-              </div>
-
-              {/* Similarity bar */}
-              <div className="mt-3 bg-gray-700/50 rounded-full h-1">
-                <div
-                  className={`h-1 rounded-full transition-all duration-500 ${
-                    isTop ? 'bg-primary-500' : 'bg-gray-500'
-                  }`}
-                  style={{ width: `${barWidth}%` }}
-                />
               </div>
             </div>
           );

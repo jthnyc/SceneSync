@@ -3,10 +3,16 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useScenePrediction } from './hooks/useScenePrediction';
 import { useSimilaritySearch } from './hooks/useSimilaritySearch';
 import type { AnalyzedTrack, PredictionResult } from './types/audio';
+import type { TrackDisplay } from './utils/parseTrackDisplay';
+import type { FeatureVector } from './workers/featureExtraction.types';
+import type { SimilarityResult } from './services/similarityService';
 import { audioStorage } from './services/audioStorageService';
 import { PrivacyNotice } from './components/PrivacyNotice';
 import { validateAudioFile } from './utils/fileValidation';
 import { Header, ModelStatus, Sidebar, MainContent } from './components';
+import { parseTrackDisplay } from './utils/parseTrackDisplay';
+import { flattenToFeatureVector } from './utils/featureVectorUtils';
+
 import './index.css';
 
 // Detects Safari private browsing mode, which blocks IndexedDB entirely
@@ -57,9 +63,16 @@ function App() {
   const [showResults, setShowResults] = useState(false);
   const [storageStats, setStorageStats] = useState({ count: 0, size: 0 });
   const [storageAvailable, setStorageAvailable] = useState(true);
-  // Drives the red "storage full" state in StorageInfo — set on quota error,
-  // cleared when the user removes tracks, freeing space
   const [storageFull, setStorageFull] = useState(false);
+  const [activeTrack, setActiveTrack] = useState<{
+    type: 'reference' | 'match';
+    file: File | string;
+    features?: FeatureVector;
+    metadata: TrackDisplay;
+  } | null>(null);
+  const [referenceFeatures, setReferenceFeatures] = useState<FeatureVector | null>(null);
+  const [selectedMatchFile, setSelectedMatchFile] = useState<string | undefined>(undefined);
+  
   const lastToastResultRef = useRef<PredictionResult | null>(null);
   const storedTrackIds = useRef<Set<string>>(new Set());
 
@@ -67,8 +80,15 @@ function App() {
     ? trackHistory.find(t => t.id === selectedTrackId)?.result ?? undefined
     : result ?? undefined;
 
-  // Stable function — called directly after storage writes/deletes complete
-  // rather than relying on trackHistory changes, which fire before writes commit
+  const handleShowReference = (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => {
+    setActiveTrack({
+      type: 'reference',
+      file: track.file,
+      features: track.features,
+      metadata: track.metadata
+    });
+  };
+
   const updateStats = useCallback(async () => {
     if (!storageAvailable) return;
     try {
@@ -79,7 +99,7 @@ function App() {
     }
   }, [storageAvailable]);
 
-  // Only trigger fade-in animation when new prediction completes
+  // Animation timing
   useEffect(() => {
     if (result && !selectedTrackId) {
       setShowResults(false);
@@ -92,7 +112,7 @@ function App() {
     }
   }, [result, selectedTrackId, displayResult]);
 
-  // Initialize model, IndexedDB, and load descriptions on mount
+  // Initialize on mount
   useEffect(() => {
     const init = async () => {
       try {
@@ -109,8 +129,6 @@ function App() {
         const descriptions = await descriptionsResponse.json();
         setSceneDescriptions(descriptions);
         await initializeModel();
-
-        // Initial stats load after DB is ready
         await updateStats();
       } catch (err) {
         console.error('Failed to initialize:', err);
@@ -135,14 +153,39 @@ function App() {
     init();
   }, [initializeModel, updateStats]);
 
-  // Show error toast when model loading fails
+  // Show error toast on model failure
   useEffect(() => {
     if (error && error.type === 'model') {
       toast.error(error.message, { duration: 5000 });
     }
   }, [error]);
 
-  // Add track to history when result updates
+  // Set active track when result comes in
+  useEffect(() => {
+    if (result && selectedFile && !activeTrack) {
+      if (result.features && Array.isArray(result.features)) {
+        const structuredFeatures = flattenToFeatureVector(result.features);
+        
+        if (structuredFeatures) {
+          const metadata: TrackDisplay = {
+            title: selectedFile.name,
+            subtitle: 'Your reference',
+            source: 'Uploaded file'
+          };
+          
+          setReferenceFeatures(structuredFeatures);
+          setActiveTrack({
+            type: 'reference',
+            file: selectedFile,
+            features: structuredFeatures,
+            metadata
+          });
+        }
+      }
+    }
+  }, [result, selectedFile, activeTrack]);
+
+  // Add track to history
   useEffect(() => {
     if (result && selectedFile) {
       if (lastToastResultRef.current === result) return;
@@ -170,7 +213,6 @@ function App() {
         audioStorage.storeTrack(trackId, selectedFile, newTrack)
           .then(() => {
             console.log('Track stored successfully:', trackId);
-            // Update stats AFTER the write commits — fixes the Safari count delay
             updateStats();
           })
           .catch((err: Error) => {
@@ -181,13 +223,11 @@ function App() {
             );
 
             if (isQuotaError(err)) {
-              // Quota errors are actionable — tell the user exactly what to do
               setStorageFull(true);
               toast.error('Storage full — clear some tracks to save new ones.', {
                 duration: 6000,
               });
             } else {
-              // Generic failure — analysis still visible this session
               toast.error('Failed to save track to storage. Analysis results are still visible this session.', {
                 duration: 5000,
               });
@@ -201,36 +241,44 @@ function App() {
     }
   }, [result, selectedFile, storageAvailable, updateStats]);
 
-  // File upload handler with validation
+  // File upload handler
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
     const validation = validateAudioFile(file);
     if (!validation.isValid) {
       toast.error(validation.error || 'Invalid file', { duration: 5000 });
       e.target.value = '';
       return;
     }
+    
     setSelectedFile(file);
     setSelectedTrackId(null);
+    setActiveTrack(null);
+    
     await predictSceneType(file);
-    findSimilar(file);  // ← runs in parallel
+    findSimilar(file);
   };
 
-  // Drag and drop handler with validation
+  // Drag and drop handler
   const handleFileDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
+    
     const validation = validateAudioFile(file);
     if (!validation.isValid) {
       toast.error(validation.error || 'Invalid file', { duration: 5000 });
       return;
     }
+    
     setSelectedFile(file);
     setSelectedTrackId(null);
+    setActiveTrack(null);
+    
     await predictSceneType(file);
-    findSimilar(file);  // ← runs in parallel
+    findSimilar(file);
   };
 
   const handleRetry = () => {
@@ -240,6 +288,8 @@ function App() {
   const handleClearFile = () => {
     setSelectedFile(null);
     setSelectedTrackId(null);
+    setActiveTrack(null);
+    setReferenceFeatures(null);
     clearError();
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
@@ -248,6 +298,7 @@ function App() {
   const handleSelectTrack = (id: string) => {
     setSelectedTrackId(id);
     setSelectedFile(null);
+    setActiveTrack(null);
     clearError();
   };
 
@@ -258,10 +309,9 @@ function App() {
       if (selectedTrackId === id) {
         setSelectedTrackId(null);
         setSelectedFile(null);
+        setActiveTrack(null);
       }
-      // Update stats after delete commits
       await updateStats();
-      // If storage was full, a deletion frees space — clear the warning
       setStorageFull(false);
       toast.success('Track removed', { duration: 2000 });
     } catch (err) {
@@ -278,8 +328,9 @@ function App() {
       setTrackHistory([]);
       setSelectedTrackId(null);
       setSelectedFile(null);
+      setActiveTrack(null);
+      setReferenceFeatures(null);
       clearError();
-      // Update stats after clear commits and reset full state
       await updateStats();
       setStorageFull(false);
       toast.success(`Cleared ${count} track${count !== 1 ? 's' : ''}`, { duration: 2000 });
@@ -291,6 +342,37 @@ function App() {
 
   const handleRetryModelInit = async () => {
     await initializeModel();
+  };
+
+  const handleSelectMatch = (result: SimilarityResult) => {
+    const baseUrl = process.env.REACT_APP_R2_PUBLIC_URL || 'https://pub-2014bbd27fde402e8d8cd1a67fe4fbcd.r2.dev';
+    
+    // Strip leading "./" or "data/" to get the R2 key
+    // FMA:     "./data/fma_small/141/141300.mp3" → "fma_small/141/141300.mp3"
+    // Musopen: "data/musopen/Musopen DVD/..." → "musopen/Musopen DVD/..."
+    const r2Key = result.file.replace(/^\.\//, '').replace(/^data\//, '');
+    
+    // Encode each path segment individually so slashes are preserved
+    const encodedKey = r2Key.split('/').map(segment => encodeURIComponent(segment)).join('/');
+    const r2Url = `${baseUrl}/${encodedKey}`;
+    
+    const features = result.features && Array.isArray(result.features) 
+      ? flattenToFeatureVector(result.features) 
+      : undefined;
+    
+    setActiveTrack({
+      type: 'match',
+      file: r2Url,
+      features,
+      metadata: parseTrackDisplay(result.file)
+    });
+    
+    setSelectedMatchFile(result.file);
+  };
+
+  const handleClearActiveTrack = () => {
+    setActiveTrack(null);
+    // Don't clear referenceFeatures — keep for comparison
   };
 
   return (
@@ -342,6 +424,12 @@ function App() {
             onDismissError={clearError}
             similarityResults={similarityResults}
             isSearching={isSearching}
+            activeTrack={activeTrack}
+            referenceFeatures={referenceFeatures}
+            onSelectMatch={handleSelectMatch}
+            onClearActiveTrack={handleClearActiveTrack}
+            onShowReference={handleShowReference}
+            selectedMatchFile={selectedMatchFile}
           />
 
           <Sidebar
