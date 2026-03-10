@@ -70,41 +70,105 @@ In 2–3 sentences: explain why this suggestion works for the same scene as the 
 No jargon. No bullet points. Start with what they have in common, not with "This track" or "The track".`;
 }
 
+// ── Directional comparison helpers ───────────────────────────────────────
+// Each returns { label, magnitude } or null if the difference is not
+// perceptually meaningful. magnitude is normalized [0, 1] — used to sort
+// divergent traits so the most significant difference leads the prompt.
+
+type TraitComparison = { label: string; magnitude: number };
+
+function degreeWord(normalized: number): string {
+  if (normalized > 0.5) return 'significantly';
+  if (normalized > 0.25) return 'noticeably';
+  return 'slightly';
+}
+
+function compareBrightness(ref: number, match: number): TraitComparison | null {
+  // spectral centroid: Meyda outputs in bins, not Hz. Practical range ~0–120 bins.
+  const range = 120;
+  const normalized = Math.abs(match - ref) / range;
+  if (normalized < 0.08) return null;
+  const direction = match > ref ? 'brighter' : 'darker';
+  return {
+    label: `Brightness: ${degreeWord(normalized)} ${direction} than your reference`,
+    magnitude: normalized,
+  };
+}
+
+function compareEnergy(ref: number, match: number): TraitComparison | null {
+  // rms: practical range ~0–0.2
+  const range = 0.2;
+  const normalized = Math.abs(match - ref) / range;
+  if (normalized < 0.1) return null;
+  const direction = match > ref ? 'more energetic' : 'quieter';
+  return {
+    label: `Energy level: ${degreeWord(normalized)} ${direction} than your reference`,
+    magnitude: normalized,
+  };
+}
+
+function compareWidth(ref: number, match: number): TraitComparison | null {
+  // spectral spread: Meyda outputs in bins, not Hz. Practical range ~0–80 bins.
+  const range = 80;
+  const normalized = Math.abs(match - ref) / range;
+  if (normalized < 0.08) return null;
+  const direction = match > ref ? 'wider / fuller in spectrum' : 'narrower / more focused';
+  return {
+    label: `Frequency width: ${degreeWord(normalized)} ${direction} than your reference`,
+    magnitude: normalized,
+  };
+}
+
+function compareTexture(ref: number, match: number): TraitComparison | null {
+  // spectral flatness: range 0–1
+  const normalized = Math.abs(match - ref);
+  if (normalized < 0.1) return null;
+  const direction = match > ref ? 'noisier / more textural' : 'more tonal / cleaner';
+  return {
+    label: `Texture: ${degreeWord(normalized)} ${direction} than your reference`,
+    magnitude: normalized,
+  };
+}
+
+function compareWarmth(ref: number, match: number): TraitComparison | null {
+  // mfcc_1: practical range roughly -50–100
+  const range = 150;
+  const normalized = Math.abs(match - ref) / range;
+  if (normalized < 0.1) return null;
+  const direction = match > ref ? 'warmer / fuller bodied' : 'leaner / brighter in character';
+  return {
+    label: `Timbre: ${degreeWord(normalized)} ${direction} than your reference`,
+    magnitude: normalized,
+  };
+}
+
 // ── Shared vs divergent trait analysis ───────────────────────────────────
-// These functions compare two vectors and produce human-readable labels
-// for what converges and what diverges between reference and match.
 
 function findSharedTraits(ref: FeatureVector, match: FeatureVector): string {
   const traits: string[] = [];
 
+  // Energy arc — categorical, no continuous comparison available
   const refArc = classifyArc(ref.rms[0], ref.rms[2]);
   const matchArc = classifyArc(match.rms[0], match.rms[2]);
   if (refArc === matchArc) {
     traits.push(`Energy arc: both ${refArc}`);
   }
 
-  const refLevel = classifyLevel(ref.rms[1]);
-  const matchLevel = classifyLevel(match.rms[1]);
-  if (refLevel === matchLevel) {
-    traits.push(`Overall energy level: both ${refLevel}`);
+  // Continuous dimensions — only "shared" if the comparison function
+  // returns null (values are actually close, not just in the same broad bucket)
+  if (compareBrightness(ref.centroid[1], match.centroid[1]) === null) {
+    const label = classifyBrightness(ref.centroid[1]);
+    traits.push(`Brightness: both ${label}`);
   }
 
-  const refBright = classifyBrightness(ref.centroid[1]);
-  const matchBright = classifyBrightness(match.centroid[1]);
-  if (refBright === matchBright) {
-    traits.push(`Brightness: both ${refBright}`);
+  if (compareTexture(ref.flatness[1], match.flatness[1]) === null) {
+    const label = classifyTexture(ref.flatness[1]);
+    traits.push(`Texture: both ${label}`);
   }
 
-  const refTexture = classifyTexture(ref.flatness[1]);
-  const matchTexture = classifyTexture(match.flatness[1]);
-  if (refTexture === matchTexture) {
-    traits.push(`Texture: both ${refTexture}`);
-  }
-
-  const refWarmth = classifyWarmth(ref.mfcc_1[1]);
-  const matchWarmth = classifyWarmth(match.mfcc_1[1]);
-  if (refWarmth === matchWarmth) {
-    traits.push(`Timbral character: both ${refWarmth}`);
+  if (compareWarmth(ref.mfcc_1[1], match.mfcc_1[1]) === null) {
+    const label = classifyWarmth(ref.mfcc_1[1]);
+    traits.push(`Timbral character: both ${label}`);
   }
 
   const refNote = getDominantNote(ref);
@@ -119,39 +183,35 @@ function findSharedTraits(ref: FeatureVector, match: FeatureVector): string {
 }
 
 function findDivergentTraits(ref: FeatureVector, match: FeatureVector): string {
-  const traits: string[] = [];
+  // Collect all continuous comparisons with their magnitude
+  const comparisons: TraitComparison[] = [
+    compareBrightness(ref.centroid[1], match.centroid[1]),
+    compareEnergy(ref.rms[1], match.rms[1]),
+    compareWidth(ref.spread[1], match.spread[1]),
+    compareTexture(ref.flatness[1], match.flatness[1]),
+    compareWarmth(ref.mfcc_1[1], match.mfcc_1[1]),
+  ].filter((c): c is TraitComparison => c !== null);
 
-  const refBright = classifyBrightness(ref.centroid[1]);
-  const matchBright = classifyBrightness(match.centroid[1]);
-  if (refBright !== matchBright) {
-    traits.push(`Brightness: reference is ${refBright}, suggestion is ${matchBright}`);
-  }
-
+  // Energy arc is categorical — insert with a fixed medium weight when different
   const refArc = classifyArc(ref.rms[0], ref.rms[2]);
   const matchArc = classifyArc(match.rms[0], match.rms[2]);
   if (refArc !== matchArc) {
-    traits.push(`Energy arc: reference is ${refArc}, suggestion is ${matchArc}`);
+    comparisons.push({
+      label: `Energy arc: reference is ${refArc}, suggestion is ${matchArc}`,
+      magnitude: 0.3,
+    });
   }
 
-  const refWidth = classifyWidth(ref.spread[1]);
-  const matchWidth = classifyWidth(match.spread[1]);
-  if (refWidth !== matchWidth) {
-    traits.push(`Frequency width: reference is ${refWidth}, suggestion is ${matchWidth}`);
-  }
+  // Sort by magnitude descending — most acoustically significant difference first
+  comparisons.sort((a, b) => b.magnitude - a.magnitude);
 
-  const refTexture = classifyTexture(ref.flatness[1]);
-  const matchTexture = classifyTexture(match.flatness[1]);
-  if (refTexture !== matchTexture) {
-    traits.push(`Texture: reference is ${refTexture}, suggestion is ${matchTexture}`);
-  }
-
-  return traits.length > 0
-    ? traits.join('\n')
+  return comparisons.length > 0
+    ? comparisons.slice(0, 4).map(c => c.label).join('\n')
     : 'Very close overall — minimal meaningful differences';
 }
 
 // ── Classifier helpers ────────────────────────────────────────────────────
-// Return discrete labels used in both comparison and single-track description.
+// Discrete labels used in single-track description and shared trait fallbacks.
 
 function classifyArc(p25: number, p75: number): string {
   if (p75 > p25 * 1.4) return 'building / escalating';
