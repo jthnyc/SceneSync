@@ -10,7 +10,8 @@ import {
   SkeletonCard,
   ErrorDisplay,
   AudioPlayer,
-  SimilarityResults
+  SimilarityResults,
+  TrackExplanation
 } from './';
 import type { ErrorState } from '../hooks/useScenePrediction';
 import type { AnalyzedTrack } from '../types/audio';
@@ -49,6 +50,7 @@ interface MainContentProps {
   onClearActiveTrack: () => void;
   onShowReference?: (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => void;
   selectedMatchFile?: string;
+  featureVector: import('../workers/featureExtraction.types').FeatureVector | null;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -74,6 +76,7 @@ const MainContent: React.FC<MainContentProps> = ({
   onClearActiveTrack,
   onShowReference,
   selectedMatchFile,
+  featureVector,
 }) => {
   const [historyAudioFile, setHistoryAudioFile] = useState<File | null>(null);
   const [loadingHistoryAudio, setLoadingHistoryAudio] = useState(false);
@@ -201,6 +204,16 @@ const MainContent: React.FC<MainContentProps> = ({
             onClear={handleClear}
           />
         </div>
+      )}
+
+      {/* Explanation layer — auto-fires on match selection */}
+      {featureVector && !error && (
+        <TrackExplanation
+          featureVector={featureVector}
+          matchFeatureVector={activeTrack?.type === 'match' ? activeTrack.features ?? null : null}
+          referenceTitle={selectedFile?.name ?? null}
+          matchTitle={activeTrack?.type === 'match' ? activeTrack.metadata.title ?? null : null}
+        />
       )}
 
       {/* Similarity results */}
