@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { PredictionResult } from '../hooks/useScenePrediction';
-import { Clock, Target } from 'lucide-react';
 import { formatFileSize, formatDuration } from '../utils/formatUtils';
 import { audioStorage } from '../services/audioStorageService';
 import {
@@ -18,8 +17,6 @@ import type { AnalyzedTrack } from '../types/audio';
 import type { SimilarityResult } from '../services/similarityService';
 import type { TrackDisplay } from '../utils/parseTrackDisplay';
 import type { FeatureVector } from '../workers/featureExtraction.types';
-import { SPLIT_THRESHOLD } from '../constants/prediction';
-import { flattenToFeatureVector } from '../utils/featureVectorUtils';
 
 interface MainContentProps {
   selectedFile: File | null;
@@ -30,7 +27,6 @@ interface MainContentProps {
   isLoading: boolean;
   hasError: boolean;
   error: ErrorState | null;
-  showResults: boolean;
   similarityResults: SimilarityResult[] | null;
   isSearching: boolean;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -38,7 +34,6 @@ interface MainContentProps {
   onClearFile: () => void;
   onRetry?: () => void;
   onDismissError?: () => void;
-  // Props for active track management
   activeTrack: {
     type: 'reference' | 'match';
     file: File | string;
@@ -50,7 +45,7 @@ interface MainContentProps {
   onClearActiveTrack: () => void;
   onShowReference?: (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => void;
   selectedMatchFile?: string;
-  featureVector: import('../workers/featureExtraction.types').FeatureVector | null;
+  featureVector: FeatureVector | null;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -62,9 +57,8 @@ const MainContent: React.FC<MainContentProps> = ({
   isLoading,
   hasError,
   error,
-  showResults,
-  similarityResults, 
-  isSearching,     
+  similarityResults,
+  isSearching,
   onFileChange,
   onFileDrop,
   onClearFile,
@@ -85,6 +79,7 @@ const MainContent: React.FC<MainContentProps> = ({
     features?: FeatureVector;
     metadata: TrackDisplay;
   } | null>(null);
+
   const currentTrack = selectedTrackId
     ? trackHistory.find(t => t.id === selectedTrackId)
     : null;
@@ -132,16 +127,7 @@ const MainContent: React.FC<MainContentProps> = ({
 
     window.addEventListener('showReference', handleShowReferenceEvent);
     return () => window.removeEventListener('showReference', handleShowReferenceEvent);
-  }, [onShowReference]); // Empty array since onShowReference is stable
-
-  const mobileResultLabel = (() => {
-    if (!displayResult) return null;
-    const sorted = Object.entries(displayResult.probabilities).sort(([, a], [, b]) => b - a);
-    if (sorted.length < 2) return { label: displayResult.sceneType, isSplit: false };
-    const [[, topProb], [, runnerUpProb]] = sorted;
-    const isSplit = (topProb - runnerUpProb) <= SPLIT_THRESHOLD;
-    return { label: displayResult.sceneType, isSplit };
-  })();
+  }, [onShowReference]);
 
   const handleClear = () => {
     onClearFile();
@@ -216,14 +202,17 @@ const MainContent: React.FC<MainContentProps> = ({
         />
       )}
 
-      {/* Similarity results */}
+      {/* Matches — mobile only. Desktop sees these in Sidebar. */}
       {(isSearching || (similarityResults && similarityResults.length > 0)) && !error && (
-        <SimilarityResults
-          results={similarityResults ?? []}
-          isSearching={isSearching}
-          onSelectMatch={onSelectMatch}
-          activeMatchId={selectedMatchFile}
-        />
+        <div className="lg:hidden">
+          <SimilarityResults
+            results={similarityResults ?? []}
+            isSearching={isSearching}
+            onSelectMatch={onSelectMatch}
+            activeMatchId={selectedMatchFile}
+            compact={true}
+          />
+        </div>
       )}
 
       {/* Loading state for history audio */}
@@ -281,65 +270,6 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Mobile result card */}
-      {mobileResultLabel && !isPredicting && !error && (
-        <div
-          className={`
-            lg:hidden mt-4 bg-gray-700/40 border border-gray-600/50 p-4 rounded-lg
-            transition-all duration-200 ease-out
-            ${showResults ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
-          `}
-        >
-          <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-            {mobileResultLabel.isSplit ? 'Strongest match' : 'Scene type'}
-          </div>
-          <div className="text-lg font-bold text-primary-400">
-            {mobileResultLabel.label}
-          </div>
-          {mobileResultLabel.isSplit && (
-            <div className="text-xs text-gray-400 mt-1">
-              Close split — see full results below
-            </div>
-          )}
-          {!mobileResultLabel.isSplit && (
-            <div className="text-xs text-gray-400 mt-1">
-              {(displayResult!.confidence * 100).toFixed(0)}% confidence · scroll down for full results
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Stats */}
-      {displayResult && !isPredicting && !error && (
-        <div
-          className={`
-            mt-6 grid grid-cols-2 gap-3 sm:gap-4
-            transition-all duration-200 ease-out
-            ${showResults ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
-          `}
-        >
-          <div className="bg-gray-700/30 p-3 sm:p-4 rounded-lg">
-            <div className="flex items-center gap-2 mb-1">
-              <Clock className="text-blue-400" size={16} />
-              <div className="text-xs sm:text-sm text-gray-400">Processing</div>
-            </div>
-            <div className="text-xl sm:text-2xl font-bold text-blue-300">
-              {(displayResult.processingTime / 1000).toFixed(2)}s
-            </div>
-          </div>
-
-          <div className="bg-gray-700/30 p-3 sm:p-4 rounded-lg">
-            <div className="flex items-center gap-2 mb-1">
-              <Target className="text-green-400" size={16} />
-              <div className="text-xs sm:text-sm text-gray-400">Confidence</div>
-            </div>
-            <div className="text-xl sm:text-2xl font-bold text-green-300">
-              {(displayResult.confidence * 100).toFixed(0)}%
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Visualizations skeleton */}
       {isPredicting && !displayResult && (
         <div className="mt-6 space-y-6">
@@ -350,25 +280,12 @@ const MainContent: React.FC<MainContentProps> = ({
       )}
 
       {/* Visualizations */}
-      {!isPredicting && !error && (activeTrack?.features || displayResult?.features) && (
-        <div
-          className={`
-            mt-6 transition-all duration-200 ease-out
-            ${showResults ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
-          `}
-        >
+      {featureVector && !isPredicting && !error && (
+        <div className="mt-6">
           <FeatureVisualizations
-            features={
-              activeTrack?.features 
-                ? activeTrack.features 
-                : (displayResult?.features && Array.isArray(displayResult.features))
-                  ? flattenToFeatureVector(displayResult.features)
-                  : undefined
-            }
+            features={featureVector}
             referenceFeatures={referenceFeatures}
             showComparison={activeTrack?.type === 'match'}
-            timeSeries={displayResult?.timeSeries}
-            sceneType={displayResult?.sceneType}
           />
         </div>
       )}

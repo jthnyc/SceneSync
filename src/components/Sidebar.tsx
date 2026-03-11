@@ -1,110 +1,58 @@
-import React, { useEffect, useRef } from 'react';
-import type { AnalyzedTrack, PredictionResult } from '../types/audio';
-import PredictionResults from './PredictionResults';
-import TrackHistory from './TrackHistory';
-import EmptyState from './EmptyState';
-import ProgressIndicator from './ProgressIndicator';
-import { Skeleton, SkeletonText } from './Skeleton';
+import React from 'react';
+import type { AnalyzedTrack } from '../types/audio';
 import { StorageInfo } from './PrivacyNotice';
+import type { SimilarityResult } from '../services/similarityService';
+import { TrackHistory, EmptyState, SimilarityResults } from './';
 
 interface SidebarProps {
-  displayResult: PredictionResult | undefined;
-  isPredicting: boolean;
   trackHistory: AnalyzedTrack[];
   selectedTrackId: string | null;
-  sceneDescriptions: { [key: string]: string };
-  showResults: boolean;
-  progress: number;
-  progressStage: string;
   onSelectTrack: (id: string) => void;
   onRemoveTrack: (id: string) => void;
   onClearAll: () => void;
   storageStats: { count: number; size: number };
   storageFull: boolean;
+  similarityResults: SimilarityResult[] | null;
+  isSearching: boolean;
+  onSelectMatch: (result: SimilarityResult) => void;
+  activeMatchId?: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  displayResult,
-  isPredicting,
   trackHistory,
   selectedTrackId,
-  sceneDescriptions,
-  showResults,
-  progress,
-  progressStage,
   onSelectTrack,
   onRemoveTrack,
   onClearAll,
   storageStats,
   storageFull,
+  similarityResults,
+  isSearching,
+  onSelectMatch,
+  activeMatchId,
 }) => {
-  const announcementRef = useRef<HTMLDivElement>(null);
-
-  // Announce when prediction completes
-  useEffect(() => {
-    if (displayResult && !isPredicting && announcementRef.current) {
-      const announcement = `Analysis complete. Scene type: ${displayResult.sceneType}. Confidence: ${(displayResult.confidence * 100).toFixed(0)} percent.`;
-      announcementRef.current.textContent = announcement;
-    }
-  }, [displayResult, isPredicting]);
-
   return (
     <div className="lg:col-span-1 lg:order-1 bg-gray-800/50 p-4 sm:p-6 rounded-xl border border-gray-700">
-      {/* Screen reader announcements */}
-      <div
-        ref={announcementRef}
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-      />
+      {trackHistory.length === 0 && <EmptyState />}
 
-      <h2 className="text-xl font-semibold mb-4 text-primary-400">
-        Prediction Results
-      </h2>
-      
-      {/* Empty State */}
-      {!displayResult && !isPredicting && trackHistory.length === 0 && (
-        <EmptyState />
-      )}
+      <div className="hidden lg:block">
+        <SimilarityResults
+          results={similarityResults ?? []}
+          isSearching={isSearching}
+          onSelectMatch={onSelectMatch}
+          activeMatchId={activeMatchId}
+        />
+      </div>
 
-      {/* Progress Indicator */}
-      {isPredicting && (
-        <div className="space-y-4 mb-6">
-          <div role="status" aria-live="polite" aria-label={progressStage}>
-            <ProgressIndicator progress={progress} stage={progressStage} />
-          </div>
-          
-          <div className="pt-4 opacity-30 hidden sm:block" aria-hidden="true">
-            <div className="bg-gray-700/50 p-4 rounded-lg">
-              <Skeleton className="h-4 w-20 mb-2" />
-              <Skeleton className="h-8 w-32 mb-3" />
-              <SkeletonText lines={2} />
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="mt-6">
+        <StorageInfo
+          fileCount={storageStats.count}
+          totalSize={storageStats.size}
+          onClear={onClearAll}
+          isFull={storageFull}
+        />
+      </div>
 
-      {/* Prediction Results */}
-      {displayResult && !isPredicting && (
-        <div role="region" aria-label="Analysis results">
-          <PredictionResults
-            result={displayResult}
-            sceneDescriptions={sceneDescriptions}
-            showResults={showResults}
-          />
-        </div>
-      )}
-
-      {/* Storage Info — turns red and shows full state when quota exceeded */}
-      <StorageInfo
-        fileCount={storageStats.count}
-        totalSize={storageStats.size}
-        onClear={onClearAll}
-        isFull={storageFull}
-      />
-
-      {/* Track History */}
       <TrackHistory
         tracks={trackHistory}
         selectedTrackId={selectedTrackId}
