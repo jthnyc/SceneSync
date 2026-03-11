@@ -226,9 +226,10 @@ function classifyLevel(p50: number): string {
 }
 
 function classifyBrightness(centroidP50: number): string {
-  if (centroidP50 > 4000) return 'bright / airy';
-  if (centroidP50 > 2000) return 'mid-balanced';
-  if (centroidP50 > 1000) return 'warm / mid-heavy';
+  // Meyda spectralCentroid in bins. Practical range ~0–120 bins.
+  if (centroidP50 > 80) return 'bright / airy';
+  if (centroidP50 > 50) return 'mid-balanced';
+  if (centroidP50 > 25) return 'warm / mid-heavy';
   return 'dark / bass-heavy';
 }
 
@@ -239,8 +240,9 @@ function classifyTexture(flatnessP50: number): string {
 }
 
 function classifyWidth(spreadP50: number): string {
-  if (spreadP50 > 3000) return 'wide / full spectrum';
-  if (spreadP50 > 1500) return 'medium width';
+  // Meyda spectralSpread in bins. Practical range ~0–80 bins.
+  if (spreadP50 > 50) return 'wide / full spectrum';
+  if (spreadP50 > 25) return 'medium width';
   return 'narrow / focused';
 }
 
