@@ -1,12 +1,8 @@
-// Drives the Phase 2 core loop:
+// Drives the core loop:
 //   File drop → decode → extract → similarity search → results
 //
-// Kept separate from useScenePrediction so the classifier flow stays intact.
-// Both hooks share the same extraction pipeline — useScenePrediction then
-// hands off to the TF.js classifier; this one hands off to similarityService.
-//
-// Phase 3b: featureVector is now stored in state and exposed in the return
-// value so TrackExplanation can access it for the "What am I hearing?" button.
+// featureVector is stored in state and exposed in the return value
+// so TrackExplanation can access it for the "What am I hearing?" button.
 
 import { useState, useCallback } from 'react';
 import { extractBrowserCompatibleFeatures } from '../utils/featureExtraction';
@@ -28,6 +24,7 @@ export const useSimilaritySearch = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<SimilarityResult[] | null>(null);
   const [featureVector, setFeatureVector] = useState<FeatureVector | null>(null); // Phase 3b
+  const [duration, setDuration] = useState<number | null>(null);
   const [error, setError] = useState<SimilarityErrorState | null>(null);
   const [progressState, setProgressState] = useState<SimilarityProgressState>({
     progress: 0,
@@ -39,6 +36,7 @@ export const useSimilaritySearch = () => {
     setError(null);
     setResults(null);
     setFeatureVector(null); // Phase 3b: clear previous explanation data on new upload
+    setDuration(null);
     setProgressState({ progress: 0, stage: 'Loading audio...' });
 
     try {
@@ -49,6 +47,7 @@ export const useSimilaritySearch = () => {
       const audioContext = new AudioContext();
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
       await audioContext.close();
+      setDuration(audioBuffer.duration);
 
       setProgressState({ progress: 20, stage: 'Analyzing audio...' });
       const { featureVector: extractedVector } = await extractBrowserCompatibleFeatures(
@@ -82,6 +81,7 @@ export const useSimilaritySearch = () => {
   const clearResults = useCallback(() => {
     setResults(null);
     setFeatureVector(null); // Phase 3b: clear explanation data alongside results
+    setDuration(null);
     setError(null);
   }, []);
 
@@ -89,6 +89,7 @@ export const useSimilaritySearch = () => {
     isSearching,
     results,
     featureVector,  // Phase 3b: consumed by TrackExplanation via parent component
+    duration,
     error,
     progressState,
     findSimilar,

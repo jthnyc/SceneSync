@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { PredictionResult } from '../hooks/useScenePrediction';
 import { formatFileSize, formatDuration } from '../utils/formatUtils';
 import { audioStorage } from '../services/audioStorageService';
 import {
   UploadZone,
   FeatureVisualizations,
-  SkeletonCard,
-  ErrorDisplay,
   AudioPlayer,
   SimilarityResults,
   TrackExplanation
 } from './';
-import type { ErrorState } from '../hooks/useScenePrediction';
 import type { AnalyzedTrack } from '../types/audio';
 import type { SimilarityResult } from '../services/similarityService';
 import type { TrackDisplay } from '../utils/parseTrackDisplay';
@@ -22,18 +18,11 @@ interface MainContentProps {
   selectedFile: File | null;
   selectedTrackId: string | null;
   trackHistory: AnalyzedTrack[];
-  displayResult: PredictionResult | undefined;
-  isPredicting: boolean;
-  isLoading: boolean;
-  hasError: boolean;
-  error: ErrorState | null;
   similarityResults: SimilarityResult[] | null;
   isSearching: boolean;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFileDrop: (e: React.DragEvent) => void;
   onClearFile: () => void;
-  onRetry?: () => void;
-  onDismissError?: () => void;
   activeTrack: {
     type: 'reference' | 'match';
     file: File | string;
@@ -52,18 +41,11 @@ const MainContent: React.FC<MainContentProps> = ({
   selectedFile,
   selectedTrackId,
   trackHistory,
-  displayResult,
-  isPredicting,
-  isLoading,
-  hasError,
-  error,
   similarityResults,
   isSearching,
   onFileChange,
   onFileDrop,
   onClearFile,
-  onRetry,
-  onDismissError,
   activeTrack,
   referenceFeatures,
   onSelectMatch,
@@ -148,26 +130,10 @@ const MainContent: React.FC<MainContentProps> = ({
       <UploadZone
         onFileChange={onFileChange}
         onFileDrop={onFileDrop}
-        isPredicting={isPredicting}
-        isLoading={isLoading}
-        hasError={hasError}
       />
 
-      {error && (
-        <div className="mt-4">
-          <ErrorDisplay
-            message={error.message}
-            type={error.type}
-            severity="error"
-            canRetry={error.canRetry}
-            onRetry={onRetry}
-            onDismiss={onDismissError}
-          />
-        </div>
-      )}
-
       {/* Main Audio Player */}
-      {activeTrack && !error && !isPredicting && (
+      {activeTrack && (
         <div className="mt-4">
           <AudioPlayer
             audioFile={activeTrack.file}
@@ -181,7 +147,7 @@ const MainContent: React.FC<MainContentProps> = ({
       )}
 
       {/* Legacy player for history audio */}
-      {!activeTrack && !selectedFile && historyAudioFile && currentTrack && !error && !isPredicting && (
+      {!activeTrack && !selectedFile && historyAudioFile && currentTrack && (
         <div className="mt-4">
           <AudioPlayer
             audioFile={historyAudioFile}
@@ -193,7 +159,7 @@ const MainContent: React.FC<MainContentProps> = ({
       )}
 
       {/* Explanation layer — auto-fires on match selection */}
-      {featureVector && !error && (
+      {featureVector && (
         <TrackExplanation
           featureVector={featureVector}
           matchFeatureVector={activeTrack?.type === 'match' ? activeTrack.features ?? null : null}
@@ -203,7 +169,7 @@ const MainContent: React.FC<MainContentProps> = ({
       )}
 
       {/* Matches — mobile only. Desktop sees these in Sidebar. */}
-      {(isSearching || (similarityResults && similarityResults.length > 0)) && !error && (
+      {(isSearching || (similarityResults && similarityResults.length > 0)) && (
         <div className="lg:hidden">
           <SimilarityResults
             results={similarityResults ?? []}
@@ -225,38 +191,19 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Basic file info while predicting */}
-      {selectedFile && !error && isPredicting && (
-        <div className="mt-4 bg-gray-700/30 p-4 rounded-lg">
-          <div className="text-sm text-gray-400 mb-1">Analyzing</div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="text-white font-medium truncate">{selectedFile.name}</div>
-            {displayResult?.audioDuration && (
-              <div className="flex items-center gap-3 text-sm flex-shrink-0">
-                <span className="text-gray-400">{formatFileSize(selectedFile.size)}</span>
-                <span className="text-gray-600">•</span>
-                <span className="text-white font-medium">
-                  {formatDuration(displayResult.audioDuration)}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* History track — audio not in storage */}
-      {selectedTrackId && !selectedFile && !historyAudioFile && !loadingHistoryAudio && currentTrack && !error && (
+      {selectedTrackId && !selectedFile && !historyAudioFile && !loadingHistoryAudio && currentTrack && (
         <div className="mt-4 space-y-3">
           <div className="bg-gray-700/30 p-4 rounded-lg">
             <div className="text-sm text-gray-400 mb-1">Viewing from history</div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="text-white font-medium truncate">{currentTrack.fileName}</div>
-              {displayResult?.audioDuration && (
+              {currentTrack.duration && (
                 <div className="flex items-center gap-3 text-sm flex-shrink-0">
                   <span className="text-gray-400">{formatFileSize(currentTrack.fileSize)}</span>
                   <span className="text-gray-600">•</span>
                   <span className="text-white font-medium">
-                    {formatDuration(displayResult.audioDuration)}
+                    {formatDuration(currentTrack.duration)}
                   </span>
                 </div>
               )}
@@ -270,17 +217,8 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Visualizations skeleton */}
-      {isPredicting && !displayResult && (
-        <div className="mt-6 space-y-6">
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-      )}
-
       {/* Visualizations */}
-      {featureVector && !isPredicting && !error && (
+      {featureVector && (
         <div className="mt-6">
           <FeatureVisualizations
             features={featureVector}

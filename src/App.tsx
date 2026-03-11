@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import { useScenePrediction } from './hooks/useScenePrediction';
 import { useSimilaritySearch } from './hooks/useSimilaritySearch';
-import type { AnalyzedTrack, PredictionResult } from './types/audio';
+import type { AnalyzedTrack } from './types/audio';
 import type { TrackDisplay } from './utils/parseTrackDisplay';
 import type { FeatureVector } from './workers/featureExtraction.types';
 import type { SimilarityResult } from './services/similarityService';
@@ -35,22 +34,12 @@ function isQuotaError(err: unknown): boolean {
 
 function App() {
   const {
-    isLoading,
-    isPredicting,
-    error,
-    result,
-    initializeModel,
-    predictSceneType,
-    isModelLoaded,
-    clearError,
-    retryPrediction,
-  } = useScenePrediction();
-
-  const {
     isSearching,
     results: similarityResults,
     featureVector: referenceFeatureVector,
+    duration: referenceDuration,
     findSimilar,
+    clearResults,
   } = useSimilaritySearch();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -67,12 +56,7 @@ function App() {
   } | null>(null);
   const [selectedMatchFile, setSelectedMatchFile] = useState<string | undefined>(undefined);
 
-  const lastToastResultRef = useRef<PredictionResult | null>(null);
   const storedTrackIds = useRef<Set<string>>(new Set());
-
-  const displayResult: PredictionResult | undefined = selectedTrackId
-    ? trackHistory.find(t => t.id === selectedTrackId)?.result ?? undefined
-    : result ?? undefined;
 
   const handleShowReference = (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => {
     setActiveTrack({
@@ -106,7 +90,6 @@ function App() {
         );
         setTrackHistory(uniqueTracks);
 
-        await initializeModel();
         await updateStats();
       } catch (err) {
         console.error('Failed to initialize:', err);
@@ -129,70 +112,47 @@ function App() {
       }
     };
     init();
-  }, [initializeModel, updateStats]);
+  }, [updateStats]);
 
-  // Show error toast on model failure
+  // Add track to history when feature extraction completes
   useEffect(() => {
-    if (error && error.type === 'model') {
-      toast.error(error.message, { duration: 5000 });
+    if (!referenceFeatureVector || !selectedFile) return;
+
+    const trackId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    if (storedTrackIds.current.has(trackId)) return;
+    storedTrackIds.current.add(trackId);
+
+    const newTrack: AnalyzedTrack = {
+      id: trackId,
+      fileName: selectedFile.name,
+      fileSize: selectedFile.size,
+      duration: referenceDuration ?? undefined,
+      timestamp: Date.now(),
+      hasStoredAudio: storageAvailable,
+      analyzedAt: Date.now()
+    };
+
+    if (storageAvailable) {
+      audioStorage.storeTrack(trackId, selectedFile, newTrack)
+        .then(() => updateStats())
+        .catch((err: Error) => {
+          storedTrackIds.current.delete(trackId);
+          setTrackHistory(prev =>
+            prev.map(t => t.id === trackId ? { ...t, hasStoredAudio: false } : t)
+          );
+          if (isQuotaError(err)) {
+            setStorageFull(true);
+            toast.error('Storage full — clear some tracks to save new ones.', { duration: 6000 });
+          } else {
+            toast.error('Failed to save track to storage.', { duration: 5000 });
+          }
+        });
     }
-  }, [error]);
 
-  // Add track to history
-  useEffect(() => {
-    if (result && selectedFile) {
-      if (lastToastResultRef.current === result) return;
-
-      const trackId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      if (storedTrackIds.current.has(trackId)) return;
-
-      storedTrackIds.current.add(trackId);
-      lastToastResultRef.current = result;
-
-      const newTrack: AnalyzedTrack = {
-        id: trackId,
-        fileName: selectedFile.name,
-        fileSize: selectedFile.size,
-        duration: result.audioDuration,
-        timestamp: Date.now(),
-        result: result,
-        hasStoredAudio: storageAvailable,
-        prediction: result,
-        features: result.features,
-        analyzedAt: Date.now()
-      };
-
-      if (storageAvailable) {
-        audioStorage.storeTrack(trackId, selectedFile, newTrack)
-          .then(() => {
-            console.log('Track stored successfully:', trackId);
-            updateStats();
-          })
-          .catch((err: Error) => {
-            console.error('Failed to store track:', err);
-            storedTrackIds.current.delete(trackId);
-            setTrackHistory(prev =>
-              prev.map(t => t.id === trackId ? { ...t, hasStoredAudio: false } : t)
-            );
-
-            if (isQuotaError(err)) {
-              setStorageFull(true);
-              toast.error('Storage full — clear some tracks to save new ones.', {
-                duration: 6000,
-              });
-            } else {
-              toast.error('Failed to save track to storage. Analysis results are still visible this session.', {
-                duration: 5000,
-              });
-            }
-          });
-      }
-
-      setTrackHistory(prev => [newTrack, ...prev]);
-      toast.success('Analysis complete!', { duration: 3000 });
-      setSelectedTrackId(trackId);
-    }
-  }, [result, selectedFile, storageAvailable, updateStats]);
+    setTrackHistory(prev => [newTrack, ...prev]);
+    toast.success('Analysis complete!', { duration: 3000 });
+    setSelectedTrackId(trackId);
+  }, [referenceFeatureVector, selectedFile, storageAvailable, updateStats, referenceDuration]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -215,7 +175,6 @@ function App() {
     setSelectedTrackId(null);
     setActiveTrack({ type: 'reference', file, metadata });
 
-    await predictSceneType(file);
     findSimilar(file);
   };
 
@@ -240,19 +199,14 @@ function App() {
     setSelectedTrackId(null);
     setActiveTrack({ type: 'reference', file, metadata });
 
-    await predictSceneType(file);
     findSimilar(file);
-  };
-
-  const handleRetry = () => {
-    if (selectedFile) retryPrediction(selectedFile);
   };
 
   const handleClearFile = () => {
     setSelectedFile(null);
     setSelectedTrackId(null);
     setActiveTrack(null);
-    clearError();
+    clearResults();
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
   };
@@ -261,7 +215,6 @@ function App() {
     setSelectedTrackId(id);
     setSelectedFile(null);
     setActiveTrack(null);
-    clearError();
   };
 
   const removeTrack = async (id: string) => {
@@ -291,7 +244,6 @@ function App() {
       setSelectedTrackId(null);
       setSelectedFile(null);
       setActiveTrack(null);
-      clearError();
       await updateStats();
       setStorageFull(false);
       toast.success(`Cleared ${count} track${count !== 1 ? 's' : ''}`, { duration: 2000 });
@@ -349,16 +301,9 @@ function App() {
             selectedFile={selectedFile}
             selectedTrackId={selectedTrackId}
             trackHistory={trackHistory}
-            displayResult={displayResult}
-            isPredicting={isPredicting}
-            isLoading={isLoading}
-            hasError={error !== null && !isModelLoaded}
             onFileChange={handleFileChange}
             onFileDrop={handleFileDrop}
             onClearFile={handleClearFile}
-            error={error}
-            onRetry={handleRetry}
-            onDismissError={clearError}
             similarityResults={similarityResults}
             isSearching={isSearching}
             activeTrack={activeTrack}

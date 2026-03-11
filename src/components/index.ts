@@ -1,11 +1,9 @@
 // Central export file for all components
 export { default as Header } from './Header';
-export { default as ModelStatus } from './ModelStatus';
 export { default as Sidebar } from './Sidebar';
 export { default as MainContent } from './MainContent';
 export { default as ErrorDisplay } from './ErrorDisplay';
 export { default as UploadZone } from './UploadZone';
-export { default as PredictionResults } from './PredictionResults';
 export { default as TrackHistory } from './TrackHistory';
 export { TrackHistoryItem } from './TrackHistoryItem';
 export { default as EmptyState } from './EmptyState';

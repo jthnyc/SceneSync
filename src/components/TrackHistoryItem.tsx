@@ -10,13 +10,6 @@ interface TrackHistoryItemProps {
   onRemove: (trackId: string) => void;
 }
 
-const sceneColors = {
-  'Montage & Narrative': 'bg-blue-100 text-blue-700 border-blue-200',
-  'Drama & Emotional': 'bg-purple-100 text-purple-700 border-purple-200',
-  'Action & Intensity': 'bg-red-100 text-red-700 border-red-200',
-  'Ambiance & Texture': 'bg-green-100 text-green-700 border-green-200',
-};
-
 export function TrackHistoryItem({
   track,
   isSelected,
@@ -33,9 +26,6 @@ export function TrackHistoryItem({
     }
   };
 
-  const confidencePercent = Math.round(track.prediction.confidence * 100);
-  const sceneColorClass = sceneColors[track.prediction.sceneType as keyof typeof sceneColors] || 'bg-gray-100 text-gray-700 border-gray-200';
-
   return (
     <div
       role="button"
@@ -44,13 +34,13 @@ export function TrackHistoryItem({
       onKeyDown={handleKeyDown}
       className={`
         group relative p-4 rounded-lg border-2 transition-all cursor-pointer
-        ${isSelected 
-          ? 'border-blue-500 bg-blue-50' 
+        ${isSelected
+          ? 'border-blue-500 bg-blue-50'
           : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
         }
         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
       `}
-      aria-label={`${track.fileName}, ${track.prediction.sceneType}, ${confidencePercent}% confidence`}
+      aria-label={track.fileName}
     >
       {/* Delete Button */}
       <button
@@ -79,22 +69,9 @@ export function TrackHistoryItem({
               {track.fileName}
             </p>
             <p className={`text-xs ${isSelected ? 'text-gray-600' : 'text-gray-400'}`}>
-              {formatFileSize(track.fileSize)} • {formatDuration(track.duration)}
+              {formatFileSize(track.fileSize)}{track.duration ? ` • ${formatDuration(track.duration)}` : null}
             </p>
           </div>
-        </div>
-
-        {/* Scene Classification */}
-        <div className="flex items-center gap-2 flex-wrap mb-2">
-          <span className={`
-            inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
-            ${sceneColorClass}
-          `}>
-            {track.prediction.sceneType}
-          </span>
-          <span className={`text-xs ${isSelected ? 'text-gray-700' : 'text-gray-400'}`}>
-            {confidencePercent}% confidence
-          </span>
         </div>
 
         {/* Timestamp */}
