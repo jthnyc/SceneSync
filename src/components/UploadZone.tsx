@@ -4,9 +4,9 @@ import { Upload } from 'lucide-react';
 interface UploadZoneProps {
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFileDrop: (e: React.DragEvent) => void;
-  isPredicting: boolean;
-  isLoading: boolean;
-  hasError: boolean;
+  isPredicting?: boolean;
+  isLoading?: boolean;
+  hasError?: boolean;
 }
 
 const UploadZone: React.FC<UploadZoneProps> = ({

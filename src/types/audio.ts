@@ -1,5 +1,3 @@
-import type { PredictionResult } from '../hooks/useScenePrediction';
-export type { PredictionResult };
 export interface AudioFile {
   id: string;
   name: string;
@@ -15,13 +13,9 @@ export interface AnalyzedTrack {
   id: string;
   fileName: string;
   fileSize: number;
-  duration: number;
+  duration?: number;
   timestamp: number;
-  result: PredictionResult;
   hasStoredAudio: boolean;
-  // Add aliases for compatibility with new components
-  prediction: PredictionResult;
-  features: number[];
   analyzedAt: number;
 }
 
