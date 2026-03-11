@@ -42,7 +42,6 @@ function App() {
     initializeModel,
     predictSceneType,
     isModelLoaded,
-    progressState,
     clearError,
     retryPrediction,
   } = useScenePrediction();
