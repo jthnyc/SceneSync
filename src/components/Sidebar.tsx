@@ -48,7 +48,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         <StorageInfo
           fileCount={storageStats.count}
           totalSize={storageStats.size}
-          onClear={onClearAll}
           isFull={storageFull}
         />
       </div>

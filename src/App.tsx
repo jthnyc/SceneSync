@@ -55,6 +55,7 @@ function App() {
     metadata: TrackDisplay;
   } | null>(null);
   const [selectedMatchFile, setSelectedMatchFile] = useState<string | undefined>(undefined);
+  const [historyFetchFailed, setHistoryFetchFailed] = useState(false); 
 
   const storedTrackIds = useRef<Set<string>>(new Set());
 
@@ -142,7 +143,7 @@ function App() {
           );
           if (isQuotaError(err)) {
             setStorageFull(true);
-            toast.error('Storage full — clear some tracks to save new ones.', { duration: 6000 });
+            toast.error('Storage full — hover over tracks to remove them.', { duration: 6000 });
           } else {
             toast.error('Failed to save track to storage.', { duration: 5000 });
           }
@@ -207,14 +208,41 @@ function App() {
     setSelectedTrackId(null);
     setActiveTrack(null);
     clearResults();
+    setHistoryFetchFailed(false);
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
   };
 
-  const handleSelectTrack = (id: string) => {
+  const handleSelectTrack = async (id: string) => {
+    clearResults();
     setSelectedTrackId(id);
     setSelectedFile(null);
     setActiveTrack(null);
+    setHistoryFetchFailed(false);
+
+    const track = trackHistory.find(t => t.id === id);
+    if (!track?.hasStoredAudio) {
+      setHistoryFetchFailed(true);
+      return;
+    }
+
+    try {
+      const file = await audioStorage.getAudioFile(id);
+      if (file) {
+        const metadata: TrackDisplay = {
+          title: track.fileName,
+          subtitle: 'From history',
+          source: 'Stored file'
+        };
+        setActiveTrack({ type: 'reference', file, metadata });
+        findSimilar(file);
+      } else {
+        setHistoryFetchFailed(true);
+      }
+    } catch (err) {
+      console.error('Failed to load history track:', err);
+      setHistoryFetchFailed(true);
+    }
   };
 
   const removeTrack = async (id: string) => {
@@ -228,6 +256,7 @@ function App() {
       }
       await updateStats();
       setStorageFull(false);
+      setHistoryFetchFailed(false);
       toast.success('Track removed', { duration: 2000 });
     } catch (err) {
       console.error('Failed to delete track:', err);
@@ -246,6 +275,8 @@ function App() {
       setActiveTrack(null);
       await updateStats();
       setStorageFull(false);
+      setHistoryFetchFailed(false)
+      clearResults();
       toast.success(`Cleared ${count} track${count !== 1 ? 's' : ''}`, { duration: 2000 });
     } catch (err) {
       console.error('Failed to clear all:', err);
@@ -313,6 +344,7 @@ function App() {
             onClearActiveTrack={handleClearActiveTrack}
             onShowReference={handleShowReference}
             selectedMatchFile={selectedMatchFile}
+            historyFetchFailed={historyFetchFailed}
           />
 
           <Sidebar

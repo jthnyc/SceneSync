@@ -79,8 +79,10 @@ class AudioStorageService {
         reject(new Error(`Failed to store track: ${transaction.error?.message ?? 'unknown error'}`));
       }
       transaction.onabort = () => {
-        console.error('[IDB] transaction aborted:', transaction.error);
-        reject(new Error(`Track storage aborted: ${transaction.error?.message ?? 'unknown'}`));
+        const originalError = transaction.error;
+        const err = new Error(`Track storage aborted: ${originalError?.message ?? 'unknown'}`);
+        err.name = originalError?.name ?? 'Error';
+        reject(err);
       }
     });
   }
