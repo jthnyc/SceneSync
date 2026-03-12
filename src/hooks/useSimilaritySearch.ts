@@ -35,7 +35,7 @@ export const useSimilaritySearch = () => {
     setIsSearching(true);
     setError(null);
     setResults(null);
-    setFeatureVector(null); // Phase 3b: clear previous explanation data on new upload
+    setFeatureVector(null); // clear previous explanation data on new upload
     setDuration(null);
     setProgressState({ progress: 0, stage: 'Loading audio...' });
 
@@ -80,7 +80,7 @@ export const useSimilaritySearch = () => {
 
   const clearResults = useCallback(() => {
     setResults(null);
-    setFeatureVector(null); // Phase 3b: clear explanation data alongside results
+    setFeatureVector(null); // clear explanation data alongside results
     setDuration(null);
     setError(null);
   }, []);
@@ -88,7 +88,7 @@ export const useSimilaritySearch = () => {
   return {
     isSearching,
     results,
-    featureVector,  // Phase 3b: consumed by TrackExplanation via parent component
+    featureVector,  // consumed by TrackExplanation via parent component
     duration,
     error,
     progressState,

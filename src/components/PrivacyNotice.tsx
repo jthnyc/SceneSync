@@ -23,11 +23,10 @@ export function PrivacyNotice() {
 interface StorageInfoProps {
   fileCount: number;
   totalSize: number;
-  onClear: () => void;
   isFull?: boolean;
 }
 
-export function StorageInfo({ fileCount, totalSize, onClear, isFull = false }: StorageInfoProps) {
+export function StorageInfo({ fileCount, totalSize, isFull = false }: StorageInfoProps) {
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -55,7 +54,7 @@ export function StorageInfo({ fileCount, totalSize, onClear, isFull = false }: S
           )}
           <span className={`text-xs min-w-0 ${isFull ? 'text-red-300' : 'text-gray-600'}`}>
             {isFull ? (
-              <>Storage full — clear tracks to free space</>
+              <>Storage full — hover over tracks to remove them</>
             ) : (
               <>
                 {fileCount} {fileCount === 1 ? 'file' : 'files'} stored • {formatBytes(totalSize)}
@@ -63,17 +62,6 @@ export function StorageInfo({ fileCount, totalSize, onClear, isFull = false }: S
             )}
           </span>
         </div>
-        <button
-          onClick={onClear}
-          className={`text-xs font-medium shrink-0 focus:outline-none focus:underline ${
-            isFull
-              ? 'text-red-400 hover:text-red-300'
-              : 'text-red-600 hover:text-red-700'
-          }`}
-          aria-label="Clear all stored files"
-        >
-          Clear All
-        </button>
       </div>
     </div>
   );

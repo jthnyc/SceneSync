@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
 import { formatFileSize, formatDuration } from '../utils/formatUtils';
-import { audioStorage } from '../services/audioStorageService';
 import {
   UploadZone,
   FeatureVisualizations,
@@ -35,6 +33,7 @@ interface MainContentProps {
   onShowReference?: (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => void;
   selectedMatchFile?: string;
   featureVector: FeatureVector | null;
+  historyFetchFailed?: boolean;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -53,9 +52,8 @@ const MainContent: React.FC<MainContentProps> = ({
   onShowReference,
   selectedMatchFile,
   featureVector,
+  historyFetchFailed,
 }) => {
-  const [historyAudioFile, setHistoryAudioFile] = useState<File | null>(null);
-  const [loadingHistoryAudio, setLoadingHistoryAudio] = useState(false);
   const [referenceTrack, setReferenceTrack] = useState<{
     file: File;
     features?: FeatureVector;
@@ -65,29 +63,6 @@ const MainContent: React.FC<MainContentProps> = ({
   const currentTrack = selectedTrackId
     ? trackHistory.find(t => t.id === selectedTrackId)
     : null;
-
-  useEffect(() => {
-    if (selectedTrackId && !selectedFile && currentTrack?.hasStoredAudio) {
-      setLoadingHistoryAudio(true);
-      setHistoryAudioFile(null);
-      audioStorage.getAudioFile(selectedTrackId)
-        .then((file) => {
-          if (file) setHistoryAudioFile(file);
-        })
-        .catch((err) => {
-          console.error('Failed to load audio from storage:', err);
-          setHistoryAudioFile(null);
-          toast.error('Could not load audio from storage. Try re-uploading the file.', {
-            duration: 4000,
-          });
-        })
-        .finally(() => {
-          setLoadingHistoryAudio(false);
-        });
-    } else {
-      setHistoryAudioFile(null);
-    }
-  }, [selectedTrackId, selectedFile, currentTrack]);
 
   useEffect(() => {
     if (activeTrack?.type === 'reference' && activeTrack.file instanceof File) {
@@ -146,18 +121,6 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Legacy player for history audio */}
-      {!activeTrack && !selectedFile && historyAudioFile && currentTrack && (
-        <div className="mt-4">
-          <AudioPlayer
-            audioFile={historyAudioFile}
-            fileName={currentTrack.fileName}
-            fileSize={currentTrack.fileSize}
-            onClear={handleClear}
-          />
-        </div>
-      )}
-
       {/* Explanation layer — auto-fires on match selection */}
       {featureVector && (
         <TrackExplanation
@@ -181,18 +144,8 @@ const MainContent: React.FC<MainContentProps> = ({
         </div>
       )}
 
-      {/* Loading state for history audio */}
-      {loadingHistoryAudio && !selectedFile && (
-        <div className="mt-4 bg-gray-700/30 p-4 rounded-lg">
-          <div className="text-sm text-gray-400 mb-2">Loading audio from storage...</div>
-          <div className="w-full bg-gray-700 rounded-full h-2">
-            <div className="bg-blue-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }} />
-          </div>
-        </div>
-      )}
-
       {/* History track — audio not in storage */}
-      {selectedTrackId && !selectedFile && !historyAudioFile && !loadingHistoryAudio && currentTrack && (
+      {selectedTrackId && !selectedFile && historyFetchFailed && currentTrack && (
         <div className="mt-4 space-y-3">
           <div className="bg-gray-700/30 p-4 rounded-lg">
             <div className="text-sm text-gray-400 mb-1">Viewing from history</div>
@@ -211,7 +164,7 @@ const MainContent: React.FC<MainContentProps> = ({
           </div>
           <div className="bg-amber-900/20 p-4 rounded-lg border border-amber-700/50">
             <div className="text-sm text-amber-200">
-              ⚠️ Audio file not available in storage. Re-upload to play this track.
+              ⚠️ Audio not in storage — drop it above to re-analyze.
             </div>
           </div>
         </div>
