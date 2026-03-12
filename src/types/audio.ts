@@ -1,3 +1,5 @@
+import { FeatureVector } from "../workers/featureExtraction.types";
+
 export interface AudioFile {
   id: string;
   name: string;
@@ -17,6 +19,7 @@ export interface AnalyzedTrack {
   timestamp: number;
   hasStoredAudio: boolean;
   analyzedAt: number;
+  featureVector?: FeatureVector;
 }
 
 // UI state types

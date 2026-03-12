@@ -78,6 +78,22 @@ export const useSimilaritySearch = () => {
     }
   }, []);
 
+  const findSimilarFromVector = useCallback(async (vector: FeatureVector) => {
+    setIsSearching(true);
+    setError(null);
+    setResults(null);
+    setFeatureVector(vector); // use cached vector directly
+    try {
+      const matches = await similarityService.findSimilar(vector, 5);
+      setResults(matches);
+    } catch (err) {
+      setError({ message: getErrorMessage(err instanceof Error ? err : String(err)), canRetry: true });
+    } finally {
+      setIsSearching(false);
+      setTimeout(() => setProgressState({ progress: 0, stage: '' }), 300);
+    }
+  }, []);
+
   const clearResults = useCallback(() => {
     setResults(null);
     setFeatureVector(null); // clear explanation data alongside results
@@ -93,6 +109,7 @@ export const useSimilaritySearch = () => {
     error,
     progressState,
     findSimilar,
+    findSimilarFromVector,
     clearResults,
   };
 };

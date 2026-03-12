@@ -3,6 +3,8 @@
  * Stores complete track data including audio files and metadata
  */
 
+import type { AnalyzedTrack } from '../types/audio';
+
 const DB_NAME = 'SceneSyncAudioDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'audioTracks';
@@ -11,7 +13,7 @@ const MAX_STORED_FILES = 10;
 interface StoredTrack {
   id: string;
   audioBlob: Blob;
-  trackData: any; // Will be AnalyzedTrack
+  trackData: AnalyzedTrack;
   storedAt: number;
 }
 
@@ -221,6 +223,38 @@ class AudioStorageService {
       count: tracks.length,
       size,
     };
+  }
+
+  async updateTrackData(id: string, partialTrackData: Partial<AnalyzedTrack>): Promise<void> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+
+      const getRequest = store.get(id);
+      getRequest.onsuccess = () => {
+        const existing = getRequest.result as StoredTrack | undefined;
+        if (!existing) {
+          reject(new Error(`Track ${id} not found`));
+          return;
+        }
+        const updatedRecord: StoredTrack = {
+          ...existing,
+          trackData: { ...existing.trackData, ...partialTrackData }
+        }
+        store.put(updatedRecord);
+      }
+      getRequest.onerror = () => reject(new Error('Failed to read track for update'));
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(new Error(`Update failed: ${transaction.error?.message ?? 'unknown'}`));
+      transaction.onabort = () => {
+        const originalError = transaction.error;
+        const err = new Error(`Update aborted: ${originalError?.message ?? 'unknown'}`);
+        err.name = originalError?.name ?? 'Error';
+        reject(err);
+      };
+    });
   }
 
   /**
