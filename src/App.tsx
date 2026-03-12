@@ -39,6 +39,7 @@ function App() {
     featureVector: referenceFeatureVector,
     duration: referenceDuration,
     findSimilar,
+    findSimilarFromVector,
     clearResults,
   } = useSimilaritySearch();
 
@@ -135,7 +136,17 @@ function App() {
 
     if (storageAvailable) {
       audioStorage.storeTrack(trackId, selectedFile, newTrack)
-        .then(() => updateStats())
+        .then(() => {
+          audioStorage.updateTrackData(trackId, { featureVector: referenceFeatureVector});
+          // Sync the in-memory history so handleSelectTrack can read the cached vector
+          setTrackHistory(prev =>
+            prev.map(t => t.id === trackId
+              ? { ...t, featureVector: referenceFeatureVector }
+              : t
+            )
+          );
+          updateStats();
+        })
         .catch((err: Error) => {
           storedTrackIds.current.delete(trackId);
           setTrackHistory(prev =>
@@ -149,7 +160,6 @@ function App() {
           }
         });
     }
-
     setTrackHistory(prev => [newTrack, ...prev]);
     toast.success('Analysis complete!', { duration: 3000 });
     setSelectedTrackId(trackId);
@@ -235,7 +245,12 @@ function App() {
           source: 'Stored file'
         };
         setActiveTrack({ type: 'reference', file, metadata });
-        findSimilar(file);
+        if (track.featureVector) {
+          // skip extraction, run search directly with cached vector
+          findSimilarFromVector(track.featureVector);
+        } else {
+          findSimilar(file);
+        }
       } else {
         setHistoryFetchFailed(true);
       }
