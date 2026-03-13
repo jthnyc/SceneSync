@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useSimilaritySearch } from './hooks/useSimilaritySearch';
-import type { AnalyzedTrack } from './types/audio';
+import { useTrackHistory } from './hooks/useTrackHistory';
+import { useExplanationCache } from './hooks/useExplanationCache';
 import type { TrackDisplay } from './utils/parseTrackDisplay';
 import type { FeatureVector } from './workers/featureExtraction.types';
 import type { SimilarityResult } from './services/similarityService';
@@ -13,26 +14,18 @@ import { parseTrackDisplay } from './utils/parseTrackDisplay';
 
 import './index.css';
 
-function isStorageUnavailable(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
-  return (
-    err.name === 'InvalidStateError' ||
-    err.name === 'SecurityError' ||
-    err.message.includes('The operation is insecure') ||
-    err.message.includes('storage')
-  );
-}
-
-function isQuotaError(err: unknown): boolean {
-  if (!(err instanceof Error)) return false;
-  return (
-    err.name === 'QuotaExceededError' ||
-    err.message.includes('QuotaExceededError') ||
-    err.message.includes('quota')
-  );
-}
-
 function App() {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
+  const [activeTrack, setActiveTrack] = useState<{
+    type: 'reference' | 'match';
+    file: File | string;
+    features?: FeatureVector;
+    metadata: TrackDisplay;
+  } | null>(null);
+  const [selectedMatchFile, setSelectedMatchFile] = useState<string | undefined>(undefined);
+  const [historyFetchFailed, setHistoryFetchFailed] = useState(false); 
+
   const {
     isSearching,
     results: similarityResults,
@@ -43,22 +36,34 @@ function App() {
     clearResults,
   } = useSimilaritySearch();
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [trackHistory, setTrackHistory] = useState<AnalyzedTrack[]>([]);
-  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
-  const [storageStats, setStorageStats] = useState({ count: 0, size: 0 });
-  const [storageAvailable, setStorageAvailable] = useState(true);
-  const [storageFull, setStorageFull] = useState(false);
-  const [activeTrack, setActiveTrack] = useState<{
-    type: 'reference' | 'match';
-    file: File | string;
-    features?: FeatureVector;
-    metadata: TrackDisplay;
-  } | null>(null);
-  const [selectedMatchFile, setSelectedMatchFile] = useState<string | undefined>(undefined);
-  const [historyFetchFailed, setHistoryFetchFailed] = useState(false); 
+  const {
+    trackHistory,
+    storageStats,
+    storageAvailable,
+    storageFull,
+    addTrack,
+    updateTrack, // passed into useExplanationCache
+    removeTrack,
+    clearAllTracks,
+    getTrack,
+  } = useTrackHistory();
 
-  const storedTrackIds = useRef<Set<string>>(new Set());
+  const {
+    referenceExplanation,
+    matchExplanation,
+    isExplaining: isExplainingTrack,
+    error: explanationError,
+    explainReference,
+    explainMatchTrack,
+    clearExplanations,
+    restoreReferenceExplanation,
+  } = useExplanationCache({
+    selectedTrackId,
+    activeMatchFile: selectedMatchFile ?? null,
+    getTrack,
+    updateTrack,
+    storageAvailable,
+  });
 
   const handleShowReference = (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => {
     setActiveTrack({
@@ -69,101 +74,18 @@ function App() {
     });
   };
 
-  const updateStats = useCallback(async () => {
-    if (!storageAvailable) return;
-    try {
-      const stats = await audioStorage.getStorageStats();
-      setStorageStats(stats);
-    } catch (err) {
-      console.error('Failed to get storage stats:', err);
-    }
-  }, [storageAvailable]);
-
-  // Initialize on mount
-  useEffect(() => {
-    const init = async () => {
-      try {
-        await audioStorage.init();
-        localStorage.removeItem('sceneSync_trackHistory');
-
-        const storedTracks = await audioStorage.getAllTracks();
-        const uniqueTracks = storedTracks.filter((track, index, self) =>
-          index === self.findIndex((t) => t.id === track.id)
-        );
-        setTrackHistory(uniqueTracks);
-
-        await updateStats();
-      } catch (err) {
-        console.error('Failed to initialize:', err);
-        if (isStorageUnavailable(err)) {
-          setStorageAvailable(false);
-          toast('Storage unavailable — results won\'t be saved this session. Try a non-private window.', {
-            icon: '🔒',
-            duration: 8000,
-            style: {
-              background: '#1f2937',
-              color: '#fbbf24',
-              border: '1px solid #92400e',
-            },
-          });
-        } else {
-          toast.error('Failed to initialize storage. Some features may be unavailable.', {
-            duration: 5000,
-          });
-        }
-      }
-    };
-    init();
-  }, [updateStats]);
-
   // Add track to history when feature extraction completes
   useEffect(() => {
     if (!referenceFeatureVector || !selectedFile) return;
-
-    const trackId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    if (storedTrackIds.current.has(trackId)) return;
-    storedTrackIds.current.add(trackId);
-
-    const newTrack: AnalyzedTrack = {
-      id: trackId,
-      fileName: selectedFile.name,
-      fileSize: selectedFile.size,
-      duration: referenceDuration ?? undefined,
-      timestamp: Date.now(),
-      hasStoredAudio: storageAvailable,
-      analyzedAt: Date.now()
-    };
-
-    if (storageAvailable) {
-      audioStorage.storeTrack(trackId, selectedFile, newTrack)
-        .then(() => {
-          audioStorage.updateTrackData(trackId, { featureVector: referenceFeatureVector});
-          // Sync the in-memory history so handleSelectTrack can read the cached vector
-          setTrackHistory(prev =>
-            prev.map(t => t.id === trackId
-              ? { ...t, featureVector: referenceFeatureVector }
-              : t
-            )
-          );
-          updateStats();
-        })
-        .catch((err: Error) => {
-          storedTrackIds.current.delete(trackId);
-          setTrackHistory(prev =>
-            prev.map(t => t.id === trackId ? { ...t, hasStoredAudio: false } : t)
-          );
-          if (isQuotaError(err)) {
-            setStorageFull(true);
-            toast.error('Storage full — hover over tracks to remove them.', { duration: 6000 });
-          } else {
-            toast.error('Failed to save track to storage.', { duration: 5000 });
-          }
-        });
-    }
-    setTrackHistory(prev => [newTrack, ...prev]);
-    toast.success('Analysis complete!', { duration: 3000 });
-    setSelectedTrackId(trackId);
-  }, [referenceFeatureVector, selectedFile, storageAvailable, updateStats, referenceDuration]);
+    addTrack(selectedFile, referenceFeatureVector, referenceDuration)
+      .then((trackId) => {
+        if (trackId) {
+          setSelectedTrackId(trackId);
+          explainReference(referenceFeatureVector, trackId);
+        }
+      });
+       // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [referenceFeatureVector, selectedFile, referenceDuration, addTrack]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -218,6 +140,7 @@ function App() {
     setSelectedTrackId(null);
     setActiveTrack(null);
     clearResults();
+    clearExplanations();
     setHistoryFetchFailed(false);
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
@@ -230,7 +153,7 @@ function App() {
     setActiveTrack(null);
     setHistoryFetchFailed(false);
 
-    const track = trackHistory.find(t => t.id === id);
+    const track = getTrack(id);
     if (!track?.hasStoredAudio) {
       setHistoryFetchFailed(true);
       return;
@@ -246,7 +169,6 @@ function App() {
         };
         setActiveTrack({ type: 'reference', file, metadata });
         if (track.featureVector) {
-          // skip extraction, run search directly with cached vector
           findSimilarFromVector(track.featureVector);
         } else {
           findSimilar(file);
@@ -257,45 +179,6 @@ function App() {
     } catch (err) {
       console.error('Failed to load history track:', err);
       setHistoryFetchFailed(true);
-    }
-  };
-
-  const removeTrack = async (id: string) => {
-    try {
-      await audioStorage.deleteTrack(id);
-      setTrackHistory(prev => prev.filter(t => t.id !== id));
-      if (selectedTrackId === id) {
-        setSelectedTrackId(null);
-        setSelectedFile(null);
-        setActiveTrack(null);
-      }
-      await updateStats();
-      setStorageFull(false);
-      setHistoryFetchFailed(false);
-      toast.success('Track removed', { duration: 2000 });
-    } catch (err) {
-      console.error('Failed to delete track:', err);
-      toast.error('Failed to remove track');
-    }
-  };
-
-  const clearAllTracks = async () => {
-    if (!window.confirm('Clear all tracks? This cannot be undone.')) return;
-    try {
-      const count = trackHistory.length;
-      await audioStorage.clearAllTracks();
-      setTrackHistory([]);
-      setSelectedTrackId(null);
-      setSelectedFile(null);
-      setActiveTrack(null);
-      await updateStats();
-      setStorageFull(false);
-      setHistoryFetchFailed(false)
-      clearResults();
-      toast.success(`Cleared ${count} track${count !== 1 ? 's' : ''}`, { duration: 2000 });
-    } catch (err) {
-      console.error('Failed to clear all:', err);
-      toast.error('Failed to clear tracks');
     }
   };
 
@@ -317,6 +200,26 @@ function App() {
 
   const handleClearActiveTrack = () => {
     setActiveTrack(null);
+  };
+
+  const handleRemoveTrack = async (id: string) => {
+    await removeTrack(id);
+    if (selectedTrackId === id) {
+      setSelectedTrackId(null);
+      setSelectedFile(null);
+      setActiveTrack(null);
+      setHistoryFetchFailed(false);
+    }
+  };
+
+  const handleClearAllTracks = async () => {
+    await clearAllTracks();
+    setSelectedTrackId(null);
+    setSelectedFile(null);
+    setActiveTrack(null);
+    setHistoryFetchFailed(false);
+    clearResults();
+    clearExplanations();
   };
 
   return (
@@ -360,14 +263,21 @@ function App() {
             onShowReference={handleShowReference}
             selectedMatchFile={selectedMatchFile}
             historyFetchFailed={historyFetchFailed}
+            referenceExplanation={referenceExplanation}
+            matchExplanation={matchExplanation}
+            isExplainingTrack={isExplainingTrack}
+            explanationError={explanationError}
+            onExplainReference={explainReference}
+            onExplainMatch={explainMatchTrack}
+            onRestoreReference={restoreReferenceExplanation}
           />
 
           <Sidebar
             trackHistory={trackHistory}
             selectedTrackId={selectedTrackId}
             onSelectTrack={handleSelectTrack}
-            onRemoveTrack={removeTrack}
-            onClearAll={clearAllTracks}
+            onRemoveTrack={handleRemoveTrack}
+            onClearAll={handleClearAllTracks}
             storageStats={storageStats}
             storageFull={storageFull}
             similarityResults={similarityResults}
