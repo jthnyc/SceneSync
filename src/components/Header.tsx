@@ -12,7 +12,7 @@ const Header: React.FC = () => {
         />
         <div>
           <h1 className="relative text-4xl font-bold text-primary-500 leading-none">SceneSync</h1>
-          <p className="text-gray-300 text-sm mt-1">AI-Powered Film Music Scene Classifier</p>
+          <p className="text-gray-300 text-sm mt-1">Temp Music Search for Film</p>
         </div>
       </div>
     </div>

@@ -37,7 +37,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({ className = '' }) => {
         Ready to explore
       </h3>
       <p className="text-gray-400 mb-8 max-w-xs mx-auto text-sm leading-relaxed">
-        Upload an audio track to get royalty-free suggestions that work the same way acoustically — and understand why they match.
+        Drop in a temp music reference — SceneSync finds royalty-free tracks 
+        that work the same way acoustically and explains why each one fits.
       </p>
 
       {/* Feature list */}
@@ -72,7 +73,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ className = '' }) => {
           </div>
           <div>
             <span className="text-gray-300 font-medium">Royalty-free matches</span>
-            <span className="text-gray-500"> with AI-powered explanation</span>
+            <span className="text-gray-500"> with AI explanation of why each match fits</span>
           </div>
         </div>
       </div>

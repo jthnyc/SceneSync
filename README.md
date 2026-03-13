@@ -1,6 +1,6 @@
 # SceneSync 🎬
 
-A browser-based tool for directors and composers working with temp music. Drop in a reference track — SceneSync extracts its acoustic fingerprint and returns royalty-free tracks that work the same way acoustically, with an explanation of why each match fits.
+A browser-based tool for film and TV editors working with temp music. Drop in a reference track — SceneSync extracts its acoustic fingerprint, finds royalty-free tracks that work the same way acoustically, and explains in plain language why each match fits.
 
 No server. No data leaving your device.
 
@@ -10,7 +10,7 @@ SceneSync extracts an acoustic fingerprint from a reference track — energy, br
 
 The goal isn't a black box "here are similar tracks." It's **"here's the acoustic DNA of your reference, and here's why these suggestions share it."**
 
-The scene classifier (Drama / Action / Montage / Ambiance) runs in parallel as a supporting signal — not the headline feature.
+The explanation layer is what makes it meaningful — not just a similarity score, but a plain-language description of what the track is doing acoustically and why each match serves the same scene need.
 
 ## How it works
 
@@ -20,8 +20,8 @@ All processing happens client-side:
 2. Feature extraction runs in a **Web Worker** (off the main thread) using [Meyda](https://meyda.js.org/) — extracts RMS, ZCR, spectral centroid, spectral spread, spectral flatness, MFCCs (×13), and chroma (×12)
 3. Each feature is stored as percentile snapshots [p25, p50, p75] across frames — capturing the arc of the track, not just a mean
 4. The 90-value feature vector is compared against a pre-analyzed library using cosine similarity after z-score normalization
-5. Top matches are returned with similarity scores
-6. Results and track history are stored locally in **IndexedDB** — nothing leaves the device
+5. Top matches are returned with similarity scores and plain-language acoustic explanations via a provider-agnostic LLM layer
+6. Feature vectors, explanations, and track history are stored locally in **IndexedDB** — nothing leaves the device
 
 ## Royalty-free library
 
@@ -33,6 +33,7 @@ All processing happens client-side:
 | [Musopen](https://musopen.org) (CC0) | Orchestral, Chamber, Solo Piano | 63 |
 
 FMA small has no classical music — Musopen fills that gap for cinematic reference use.
+The library is actively expanding — next additions will prioritize sparse/intimate textures (solo piano, small chamber ensemble) currently underrepresented in the 243-track set.
 
 ## Tech stack
 
@@ -41,61 +42,73 @@ FMA small has no classical music — Musopen fills that gap for cinematic refere
 | Frontend | React 19 + TypeScript + Tailwind CSS |
 | Audio analysis | Web Audio API + Meyda |
 | Similarity search | Cosine similarity on z-score normalized feature vectors |
-| ML inference | TensorFlow.js (scene classifier, supporting signal) |
+| Explanation layer | Provider-agnostic LLM (DeepSeek default, swappable to Claude/OpenAI) |
 | Local storage | IndexedDB |
+| Audio streaming | Cloudflare R2 |
 | Build | Create React App + Webpack |
-| Data pipeline | Python 3.12 + librosa + numpy + pandas |
+| Data pipeline | Node.js (Meyda-aligned extraction) + Python (curation, merging, QA) |
 
 ## Features
 
 - Drag-and-drop audio upload (MP3, WAV, M4A, etc.)
 - Acoustic fingerprint extraction — 90-value feature vector via Meyda
-- Royalty-free similarity search — top 5 matches with similarity scores
-- Scene type classification as a secondary signal
-- Real-time progress bar across feature extraction passes
-- Three visualizations: spectral brightness, dynamic range, tempo analysis
-- Track history with playback — persisted across sessions
+- Royalty-free similarity search — top 5 matches with rank-relative match quality labels
+- Plain-language acoustic explanation for reference track and each match — auto-fires, no button press needed
+- Explanations and feature vectors cached in IndexedDB — history tracks load instantly without re-extraction or re-fetching explanations
+- Five acoustic visualizations: harmonic content (chroma), energy/RMS, brightness, texture, frequency width
+- Track history with full playback — persisted across sessions via Cloudflare R2 streaming
 - Fully responsive — mobile and desktop layouts
-- Privacy-first: all audio stays in the browser
+- Privacy-first: all audio and analysis stays in the browser
 
 ## Getting started
-
 ```bash
 npm install
 npm start        # development server
 npm run build    # production build
 ```
 
-## Project structure
+Requires a `.env.local` with:
+```
+REACT_APP_DEEPSEEK_API_KEY=...     # or REACT_APP_ANTHROPIC_API_KEY / REACT_APP_OPENAI_API_KEY
+REACT_APP_R2_PUBLIC_URL=...        # Cloudflare R2 public bucket URL
+```
 
+## Project structure
 ```
 src/
-  components/    # AudioPlayer, FeatureVisualizations, SimilarityResults, etc.
-  hooks/         # useScenePrediction (classifier), useSimilaritySearch (similarity)
+  components/    # AudioPlayer, FeatureVisualizations, SimilarityResults,
+                 # TrackExplanation, TrackHistory, Sidebar, MainContent, etc.
+  hooks/         # useSimilaritySearch, useTrackExplanation,
+                 # useExplanationCache, useTrackHistory
   workers/       # Web Worker for off-thread feature extraction
   utils/         # featureExtraction.ts, parseTrackDisplay.ts
-  services/      # audioStorageService, mlModelService, similarityService
-  constants/     # Shared prediction thresholds
+  services/      # audioStorageService, similarityService, explanationService
+  config/        # llmProvider.ts — swap LLM providers in one line
+                 # rankConfig.ts — match card color tiers
 public/
   data/          # feature_vectors.json — 243-track library loaded at runtime
-  models/        # TF.js model weights
 scripts/
-  extract_features.py           # FMA batch extraction
+  extract_features.js           # Node.js Meyda-aligned batch extractor
+  extract_features.py           # Python extraction — curation, QA
   extract_musopen_features.py   # Musopen extraction
   curate_library.py             # FMA diversity curation
   merge_library.py              # Merge → public/data/feature_vectors.json
+  qa_sample.py                  # Random sample + acoustic summary for QA
 ```
 
 ## Data pipeline
 
 The royalty-free library is pre-analyzed offline and shipped as a JSON file. To reproduce or extend it:
-
 ```bash
+node scripts/extract_features.js fma        # FMA extraction (Meyda-aligned)
+node scripts/extract_features.js musopen    # Musopen extraction
 conda activate scenesync
-python scripts/extract_features.py           # extract FMA features
-python scripts/extract_musopen_features.py   # extract Musopen features
-python scripts/curate_library.py             # diversity curation (180 FMA tracks)
-python scripts/merge_library.py              # merge → public/data/feature_vectors.json
+python scripts/curate_library.py            # FMA diversity curation
+python scripts/merge_library.py             # merge → public/data/feature_vectors.json
 ```
 
-Extraction parameters match the browser exactly: `SAMPLE_RATE=44100`, `N_FFT=2048`, `HOP_LENGTH=256`.
+Extraction parameters match the browser exactly: `SAMPLE_RATE=44100`, `BUFFER_SIZE=2048`, `HOP_SIZE=512`.
+
+## Swapping LLM providers
+
+The explanation layer is provider-agnostic. To switch from DeepSeek to Claude or OpenAI, change `ACTIVE_PROVIDER` in `src/config/llmProvider.ts` and set the corresponding API key in `.env.local`.
