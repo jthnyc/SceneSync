@@ -10,9 +10,10 @@ export function PrivacyNotice() {
             Privacy-First Processing
           </h3>
           <p className="text-xs text-blue-800 leading-relaxed">
-            All audio files are processed and stored <strong>locally in your browser only</strong>.
-            Nothing is uploaded to our servers. Your files remain on your device and are cleared
-            when you clear your browser data.
+            Your audio files and analysis data are processed and stored{' '}
+            <strong>locally in your browser only</strong>. Royalty-free match tracks 
+            stream from our servers for playback only — your reference audio never 
+            leaves your device.
           </p>
         </div>
       </div>

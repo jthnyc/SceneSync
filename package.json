@@ -1,5 +1,6 @@
 {
   "name": "scenesync",
+  "description": "Temp music search for film and TV editors — acoustic fingerprinting, royalty-free similarity search, plain-language explanations.",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

@@ -1,7 +1,7 @@
 {
   "short_name": "SceneSync",
-  "name": "SceneSync - Film Music Scene Classifier",
-  "description": "AI-powered scene type classification for film music",
+  "name": "SceneSync - Temp Music Search for Film",
+  "description": "Temp Music Search for Film",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
