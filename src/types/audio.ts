@@ -20,6 +20,8 @@ export interface AnalyzedTrack {
   hasStoredAudio: boolean;
   analyzedAt: number;
   featureVector?: FeatureVector;
+  referenceExplanation?: string;
+  matchExplanations?: Record<string, string>;
 }
 
 // UI state types

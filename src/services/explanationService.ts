@@ -49,7 +49,7 @@ Acoustic properties of the track:
 ${features}
 
 In 2–3 sentences: describe the feeling this track creates and what kind of scene it would serve.
-No jargon. No bullet points. Start with the emotion or the image, not with "This track" or "The track".`;
+No jargon. No bullet points. Lead with whatever is most striking about this track — the feeling, the texture, the scene it conjures. Don't open with "This track" or "The track".`;
 }
 
 function buildComparisonPrompt(ref: FeatureVector, match: FeatureVector): string {
@@ -66,8 +66,7 @@ ${sharedTraits}
 Where this suggestion differs from the reference:
 ${divergentTraits}
 
-In 2–3 sentences: explain why this suggestion works for the same scene as the reference, and note any meaningful difference the editor should know about.
-No jargon. No bullet points. Start with what they have in common, not with "This track" or "The track".`;
+In 2–3 sentences: tell the editor why this suggestion will serve the same scene need. Lead with whatever is most useful — the strongest shared quality, the key difference, or the specific scene moment it fits. Don't open with "This track" or "The track".`;
 }
 
 // ── Directional comparison helpers ───────────────────────────────────────

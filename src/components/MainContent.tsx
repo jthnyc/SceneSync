@@ -34,6 +34,13 @@ interface MainContentProps {
   selectedMatchFile?: string;
   featureVector: FeatureVector | null;
   historyFetchFailed?: boolean;
+  referenceExplanation: string | null;
+  matchExplanation: string | null;
+  isExplainingTrack: boolean;
+  explanationError: string | null;
+  onExplainReference: (fv: FeatureVector) => Promise<void>;
+  onExplainMatch: (refFv: FeatureVector, matchFv: FeatureVector) => Promise<void>;
+  onRestoreReference: () => void;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -53,6 +60,13 @@ const MainContent: React.FC<MainContentProps> = ({
   selectedMatchFile,
   featureVector,
   historyFetchFailed,
+  referenceExplanation,
+  matchExplanation,
+  isExplainingTrack,
+  explanationError,
+  onExplainReference,
+  onExplainMatch,
+  onRestoreReference,
 }) => {
   const [referenceTrack, setReferenceTrack] = useState<{
     file: File;
@@ -128,6 +142,13 @@ const MainContent: React.FC<MainContentProps> = ({
           matchFeatureVector={activeTrack?.type === 'match' ? activeTrack.features ?? null : null}
           referenceTitle={selectedFile?.name ?? null}
           matchTitle={activeTrack?.type === 'match' ? activeTrack.metadata.title ?? null : null}
+          referenceExplanation={referenceExplanation}
+          matchExplanation={matchExplanation}
+          isExplaining={isExplainingTrack}
+          error={explanationError}
+          onExplainReference={onExplainReference}
+          onExplainMatch={onExplainMatch}
+          onRestoreReference={onRestoreReference}
         />
       )}
 
