@@ -1,21 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import React, { useState, useCallback } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { useSimilaritySearch } from './hooks/useSimilaritySearch';
 import { useTrackHistory } from './hooks/useTrackHistory';
 import { useExplanationCache } from './hooks/useExplanationCache';
+import { useFileHandler } from './hooks/useFileHandler';
 import type { TrackDisplay } from './utils/parseTrackDisplay';
 import type { FeatureVector } from './workers/featureExtraction.types';
 import type { SimilarityResult } from './services/similarityService';
 import { audioStorage } from './services/audioStorageService';
 import { PrivacyNotice } from './components/PrivacyNotice';
-import { validateAudioFile } from './utils/fileValidation';
 import { Header, Sidebar, MainContent } from './components';
 import { parseTrackDisplay } from './utils/parseTrackDisplay';
 
 import './index.css';
 
 function App() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [activeTrack, setActiveTrack] = useState<{
     type: 'reference' | 'match';
@@ -24,7 +23,7 @@ function App() {
     metadata: TrackDisplay;
   } | null>(null);
   const [selectedMatchFile, setSelectedMatchFile] = useState<string | undefined>(undefined);
-  const [historyFetchFailed, setHistoryFetchFailed] = useState(false); 
+  const [historyFetchFailed, setHistoryFetchFailed] = useState(false);
 
   const {
     isSearching,
@@ -42,7 +41,7 @@ function App() {
     storageAvailable,
     storageFull,
     addTrack,
-    updateTrack, // passed into useExplanationCache
+    updateTrack,
     removeTrack,
     clearAllTracks,
     getTrack,
@@ -65,91 +64,46 @@ function App() {
     storageAvailable,
   });
 
+  const handleFileReady = useCallback((track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => {
+    setSelectedTrackId(null);
+    setActiveTrack({ type: 'reference', file: track.file, metadata: track.metadata });
+  }, []);
+
+  const handleTrackAdded = useCallback((trackId: string) => {
+    setSelectedTrackId(trackId);
+  }, []);
+
+  const { selectedFile, handleFileChange, handleFileDrop, clearFile } = useFileHandler({
+    referenceFeatureVector,
+    referenceDuration,
+    findSimilar,
+    addTrack,
+    explainReference,
+    onFileReady: handleFileReady,
+    onTrackAdded: handleTrackAdded,
+  });
+
   const handleShowReference = (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => {
     setActiveTrack({
       type: 'reference',
       file: track.file,
       features: track.features,
-      metadata: track.metadata
+      metadata: track.metadata,
     });
   };
 
-  // Add track to history when feature extraction completes
-  useEffect(() => {
-    if (!referenceFeatureVector || !selectedFile) return;
-    addTrack(selectedFile, referenceFeatureVector, referenceDuration)
-      .then((trackId) => {
-        if (trackId) {
-          setSelectedTrackId(trackId);
-          explainReference(referenceFeatureVector, trackId);
-        }
-      });
-       // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [referenceFeatureVector, selectedFile, referenceDuration, addTrack]);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const validation = validateAudioFile(file);
-    if (!validation.isValid) {
-      toast.error(validation.error || 'Invalid file', { duration: 5000 });
-      e.target.value = '';
-      return;
-    }
-
-    const metadata: TrackDisplay = {
-      title: file.name,
-      subtitle: 'Your reference',
-      source: 'Uploaded file'
-    };
-
-    setSelectedFile(file);
-    setSelectedTrackId(null);
-    setActiveTrack({ type: 'reference', file, metadata });
-
-    findSimilar(file);
-  };
-
-  const handleFileDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-
-    const validation = validateAudioFile(file);
-    if (!validation.isValid) {
-      toast.error(validation.error || 'Invalid file', { duration: 5000 });
-      return;
-    }
-
-    const metadata: TrackDisplay = {
-      title: file.name,
-      subtitle: 'Your reference',
-      source: 'Uploaded file'
-    };
-
-    setSelectedFile(file);
-    setSelectedTrackId(null);
-    setActiveTrack({ type: 'reference', file, metadata });
-
-    findSimilar(file);
-  };
-
   const handleClearFile = () => {
-    setSelectedFile(null);
+    clearFile();
     setSelectedTrackId(null);
     setActiveTrack(null);
     clearResults();
     clearExplanations();
     setHistoryFetchFailed(false);
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    if (fileInput) fileInput.value = '';
   };
 
   const handleSelectTrack = async (id: string) => {
     clearResults();
     setSelectedTrackId(id);
-    setSelectedFile(null);
     setActiveTrack(null);
     setHistoryFetchFailed(false);
 
@@ -165,7 +119,7 @@ function App() {
         const metadata: TrackDisplay = {
           title: track.fileName,
           subtitle: 'From history',
-          source: 'Stored file'
+          source: 'Stored file',
         };
         setActiveTrack({ type: 'reference', file, metadata });
         if (track.featureVector) {
@@ -192,7 +146,7 @@ function App() {
       type: 'match',
       file: r2Url,
       features: result.features ?? undefined,
-      metadata: parseTrackDisplay(result.file)
+      metadata: parseTrackDisplay(result.file),
     });
 
     setSelectedMatchFile(result.file);
@@ -206,7 +160,6 @@ function App() {
     await removeTrack(id);
     if (selectedTrackId === id) {
       setSelectedTrackId(null);
-      setSelectedFile(null);
       setActiveTrack(null);
       setHistoryFetchFailed(false);
     }
@@ -215,7 +168,6 @@ function App() {
   const handleClearAllTracks = async () => {
     await clearAllTracks();
     setSelectedTrackId(null);
-    setSelectedFile(null);
     setActiveTrack(null);
     setHistoryFetchFailed(false);
     clearResults();
