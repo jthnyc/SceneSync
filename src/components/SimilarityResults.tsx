@@ -56,11 +56,22 @@ const SimilarityResults: React.FC<SimilarityResultsProps> = ({
           return (
             <div
               key={result.file}
+              role="button"
+              tabIndex={0}
+              aria-label={`Load ${title} — ${rank.label}`}
+              aria-pressed={isActive}
               onClick={() => onSelectMatch?.(result)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectMatch?.(result);
+                }
+              }}
               className={`
                 border-l-4 ${rank.border} rounded-r-lg
                 ${compact ? 'p-3' : 'p-4'}
                 transition-all cursor-pointer
+                focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-900
                 ${isActive
                   ? 'bg-gray-700/60 ring-1 ring-gray-500'
                   : 'bg-gray-700/30 hover:bg-gray-700/50'
