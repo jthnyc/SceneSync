@@ -2,17 +2,21 @@ import { Shield, Database, AlertTriangle } from 'lucide-react';
 
 export function PrivacyNotice() {
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+    <div
+      role="region"
+      aria-label="Privacy notice"
+      className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6"
+    >
       <div className="flex items-start gap-3">
-        <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+        <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
         <div className="flex-1">
           <h3 className="text-sm font-semibold text-blue-900 mb-1">
             Privacy-First Processing
           </h3>
           <p className="text-xs text-blue-800 leading-relaxed">
             Your audio files and analysis data are processed and stored{' '}
-            <strong>locally in your browser only</strong>. Royalty-free match tracks 
-            stream from our servers for playback only — your reference audio never 
+            <strong>locally in your browser only</strong>. Royalty-free match tracks
+            stream from our servers for playback only — your reference audio never
             leaves your device.
           </p>
         </div>
@@ -40,6 +44,8 @@ export function StorageInfo({ fileCount, totalSize, isFull = false }: StorageInf
 
   return (
     <div
+      role={isFull ? 'alert' : 'status'}
+      aria-live={isFull ? 'assertive' : 'polite'}
       className={`rounded-lg p-3 mb-4 border transition-colors ${
         isFull
           ? 'bg-red-950/30 border-red-700/50'
@@ -49,9 +55,9 @@ export function StorageInfo({ fileCount, totalSize, isFull = false }: StorageInf
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {isFull ? (
-            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" aria-hidden="true" />
           ) : (
-            <Database className="w-4 h-4 text-gray-500 shrink-0" />
+            <Database className="w-4 h-4 text-gray-500 shrink-0" aria-hidden="true" />
           )}
           <span className={`text-xs min-w-0 ${isFull ? 'text-red-300' : 'text-gray-600'}`}>
             {isFull ? (
