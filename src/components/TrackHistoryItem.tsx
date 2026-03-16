@@ -40,7 +40,7 @@ export function TrackHistoryItem({
         }
         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
       `}
-      aria-label={track.fileName}
+      aria-label={`${track.fileName} — press Enter to load, Delete key to remove`}
     >
       {/* Delete Button */}
       <button
@@ -48,13 +48,16 @@ export function TrackHistoryItem({
           e.stopPropagation();
           onRemove(track.id);
         }}
-        className="
-          absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center
-        bg-red-100 text-red-600 hover:bg-red-200
-          sm:opacity-0 sm:group-hover:opacity-100
-          transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:opacity-100
-        "
-        aria-label={`Delete ${track.fileName}`}
+        className={`
+          absolute top-4 right-4 w-8 h-8 rounded flex items-center justify-center
+          transition-all
+          text-gray-600 hover:text-red-400 focus:text-red-400
+          lg:opacity-0 lg:group-hover:opacity-100
+          focus:outline-none focus:ring-2 focus:ring-red-500 focus:opacity-100
+          ${isSelected ? 'text-gray-400' : ''}
+        `}
+        aria-label={`Remove ${track.fileName} from history`}
+        tabIndex={-1}
       >
         <Trash2 className="w-4 h-4" />
       </button>
@@ -79,7 +82,7 @@ export function TrackHistoryItem({
           {new Date(track.analyzedAt).toLocaleString()}
         </div>
 
-        {/* Unsaved indicator — shown when blob failed to write to IDB */}
+        {/* Unsaved indicator */}
         {!track.hasStoredAudio && (
           <p className="text-xs text-amber-500 mt-1">
             Not saved · won't be available after refresh
