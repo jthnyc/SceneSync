@@ -1,7 +1,4 @@
 /**
- * Similarity Service — PROPOSED CHANGES
- * ======================================
- * 
  * Branch: feat/cross-source-weighting
  * 
  * Changes from current:
@@ -38,6 +35,7 @@
  */
 
 import { FeatureVector } from '../workers/featureExtraction.types';
+import { audioStorage } from './audioStorageService';
 
 export type { FeatureVector };
 
@@ -178,6 +176,8 @@ function zScore(
 
 // ── Service ───────────────────────────────────────────────────────────────
 
+// Bump this when you update public/data/feature_vectors.json
+const LIBRARY_VERSION = 'v1-243';
 class SimilarityService {
   private library: LibraryTrack[]    | null = null;
   private normalizedVecs: number[][] | null = null;
@@ -188,13 +188,33 @@ class SimilarityService {
   async loadLibrary(libraryPath = '/data/feature_vectors.json'): Promise<void> {
     if (this.isLoaded) return;
 
-    console.log('Loading similarity library from:', libraryPath);
-    const response = await fetch(libraryPath);
-    if (!response.ok) throw new Error(`Failed to fetch library: ${response.status}`);
+    // Try IndexedDB cache first
+    try {
+      const cached = await audioStorage.getLibraryCache(LIBRARY_VERSION);
+      if (cached) {
+        this.library = cached;
+        console.log(`✅ Similarity library loaded from cache: ${cached.length} tracks`);
+      }
+    } catch (err) {
+      console.warn('Library cache read failed, falling back to network:', err);
+    }
 
-    this.library = await response.json();
-    console.log(`✅ Similarity library loaded: ${this.library!.length} tracks`);
+    // Fall back to network fetch
+    if (!this.library) {
+      console.log('Fetching similarity library from:', libraryPath);
+      const response = await fetch(libraryPath);
+      if (!response.ok) throw new Error(`Failed to fetch library: ${response.status}`);
 
+      this.library = await response.json();
+      console.log(`✅ Similarity library fetched: ${this.library!.length} tracks`);
+
+      // Cache for next visit (fire-and-forget — don't block on this)
+      audioStorage.setLibraryCache(LIBRARY_VERSION, this.library!).catch(err =>
+        console.warn('Failed to cache library:', err)
+      );
+    }
+
+    // Normalize (same as before, runs regardless of source)
     const rawVecs = this.library!.map(t => flatten(t.features));
     const { means, stds } = computeNormStats(rawVecs);
 
@@ -202,13 +222,12 @@ class SimilarityService {
     this.normStds       = stds;
     this.normalizedVecs = rawVecs.map(v => zScore(v, means, stds));
 
-    // CHANGED: log reflects weighting
     const activeDims = DIMENSION_WEIGHTS.filter(w => w > 0).length;
     const fullWeight = DIMENSION_WEIGHTS.filter(w => w === 1).length;
     const halfWeight = DIMENSION_WEIGHTS.filter(w => w === 0.5).length;
     const dropped    = DIMENSION_WEIGHTS.filter(w => w === 0).length;
     console.log(`✅ Normalization computed. Weights: ${fullWeight} full, ${halfWeight} half, ${dropped} dropped (${activeDims}/90 active)`);
-    
+
     this.isLoaded = true;
   }
 

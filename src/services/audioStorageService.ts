@@ -6,9 +6,10 @@
 import type { AnalyzedTrack } from '../types/audio';
 
 const DB_NAME = 'SceneSyncAudioDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'audioTracks';
 const MAX_STORED_FILES = 10;
+const LIBRARY_CACHE_STORE = 'libraryCache';
 
 interface StoredTrack {
   id: string;
@@ -36,6 +37,9 @@ class AudioStorageService {
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
           objectStore.createIndex('storedAt', 'storedAt', { unique: false });
+        }
+        if (!db.objectStoreNames.contains(LIBRARY_CACHE_STORE)) {
+          db.createObjectStore(LIBRARY_CACHE_STORE, { keyPath: 'key' });
         }
       };
     });
@@ -291,6 +295,61 @@ class AudioStorageService {
       // Resolve only after all deletions have committed
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(new Error('Storage limit transaction failed'));
+    });
+  }
+
+  /**
+   * Get cached feature library if version matches.
+   * Returns null if no cache exists or version is stale.
+   */
+  async getLibraryCache(version: string): Promise<any[] | null> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([LIBRARY_CACHE_STORE], 'readonly');
+      const store = transaction.objectStore(LIBRARY_CACHE_STORE);
+      const request = store.get('library');
+
+      request.onsuccess = () => {
+        const result = request.result;
+        if (result && result.version === version) {
+          console.log(`[IDB] Library cache hit (version: ${version})`);
+          resolve(result.data);
+        } else {
+          console.log(`[IDB] Library cache miss (cached: ${result?.version ?? 'none'}, expected: ${version})`);
+          resolve(null);
+        }
+      };
+
+      request.onerror = () => reject(new Error('Failed to read library cache'));
+      transaction.onerror = () => reject(new Error(`Cache read failed: ${transaction.error?.message ?? 'unknown'}`));
+    });
+  }
+
+  /**
+   * Cache the feature library with a version key.
+   * Overwrites any existing cache entry.
+   */
+  async setLibraryCache(version: string, data: any[]): Promise<void> {
+    if (!this.db) await this.init();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction([LIBRARY_CACHE_STORE], 'readwrite');
+      const store = transaction.objectStore(LIBRARY_CACHE_STORE);
+
+      store.put({
+        key: 'library',
+        version,
+        data,
+        cachedAt: Date.now(),
+      });
+
+      transaction.oncomplete = () => {
+        console.log(`[IDB] Library cached (version: ${version}, ${data.length} tracks)`);
+        resolve();
+      };
+      transaction.onerror = () => reject(new Error(`Cache write failed: ${transaction.error?.message ?? 'unknown'}`));
+      transaction.onabort = () => reject(new Error(`Cache write aborted: ${transaction.error?.message ?? 'unknown'}`));
     });
   }
 
