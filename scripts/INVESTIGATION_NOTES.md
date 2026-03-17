@@ -3,8 +3,12 @@
 ## Overview
 
 Musopen (classical) tracks consistently score lower in similarity against FMA references.
-Hypothesis: MFCCs capture recording environment (room acoustics, mic character, mastering)
+Initial hypothesis: MFCCs capture recording environment (room acoustics, mic character, mastering)
 alongside timbral content, inflating distance between sources.
+
+**Finding: The initial hypothesis was wrong.** The gap is caused by loudness (RMS, MFCC 1) and
+harmonic density (chroma), not higher-order MFCCs encoding recording environment. MFCCs 8-10
+(fine timbre) are actually the *least* divergent group (avg d=0.20).
 
 ## Step 1: Per-Dimension Distribution Analysis
 
@@ -122,6 +126,7 @@ Measure how well Musopen tracks surface in results.
 - Chroma at 0.5 is too aggressive — it lets structurally similar but instrumentally different tracks rise too fast
 - Chroma at 0.75 is the compromise: still reduces production-density bias but preserves more harmonic/instrument fingerprint
 - The scheme is directionally correct but instrumentation similarity has limits that feature vectors alone can't fully solve
+- Small library size (243 tracks) contributes to false promotions — fewer intermediate tracks to bridge gaps between sources. Library growth and weighting are complementary fixes.
 
 ## Step 4: Decision
 
@@ -134,3 +139,26 @@ Rationale:
 - Change is minimal: one weight array + one parameter added to cosineSimilarity
 
 Separate fix: Schubert Sonata in A Minor (D. 784) has 3 null values at p50 for centroid, spread, flatness. Needs re-extraction or interpolation.
+
+---
+
+## Reproducing the Analysis
+
+All three scripts run against the merged feature library file. From the repo root:
+
+```bash
+# Step 1: Per-dimension distribution analysis
+python scripts/analyze_cross_source_gap.py public/data/feature_vectors.json
+
+# Step 2: Weighting scheme experiments
+python scripts/test_weighting_schemes.py public/data/feature_vectors.json
+
+# Step 3: Ear-test ranking comparison
+python scripts/ear_test_comparison.py public/data/feature_vectors.json
+```
+
+Requirements: Python 3.12+, numpy. No conda environment needed — these scripts only use numpy and the standard library.
+
+Step 1 also outputs `scripts/cross_source_stats.csv` (per-dimension statistics). This file is a diagnostic artifact and is not committed to the repo.
+
+The scripts use `np.random.seed(42)` for reproducible reference track selection. Results will match the tables above as long as `feature_vectors.json` contains the same 243 tracks.
