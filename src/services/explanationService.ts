@@ -10,7 +10,6 @@
 // To swap models, change ACTIVE_PROVIDER in that file — nothing here changes.
 
 import { FeatureVector } from '../workers/featureExtraction.types';
-import { ACTIVE_PROVIDER, getActiveConfig } from '../config/llmProvider';
 
 // ── Public API ────────────────────────────────────────────────────────────
 
@@ -344,79 +343,20 @@ function describeTimbral(mfcc1P50: number): string {
   return descriptions[label] ?? '';
 }
 
-// ── API call — provider-aware ─────────────────────────────────────────────
+// ── API call — via serverless proxy ───────────────────────────────────────
 
 async function callProvider(prompt: string): Promise<string> {
-  const config = getActiveConfig();
-  const apiKey = process.env[config.apiKeyEnvVar];
-
-  if (!apiKey) {
-    throw new Error(
-      `Missing API key: set ${config.apiKeyEnvVar} in .env.local (local) ` +
-      `or in Vercel environment variables (production).`
-    );
-  }
-
-  if (ACTIVE_PROVIDER === 'anthropic') {
-    return callAnthropic(prompt, apiKey, config.model, config.maxTokens);
-  }
-
-  return callOpenAICompatible(prompt, apiKey, config);
-}
-
-async function callOpenAICompatible(
-  prompt: string,
-  apiKey: string,
-  config: ReturnType<typeof getActiveConfig>
-): Promise<string> {
-  const response = await fetch(config.endpoint, {
+  const response = await fetch('/api/explain', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': config.authHeader(apiKey),
-    },
-    body: JSON.stringify({
-      model: config.model,
-      max_tokens: config.maxTokens,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.4,
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
   });
 
   if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`${ACTIVE_PROVIDER} API error ${response.status}: ${err}`);
+    const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(err.error || `API error ${response.status}`);
   }
 
   const data = await response.json();
-  return data.choices?.[0]?.message?.content?.trim() ?? '';
-}
-
-async function callAnthropic(
-  prompt: string,
-  apiKey: string,
-  model: string,
-  maxTokens: number
-): Promise<string> {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Anthropic API error ${response.status}: ${err}`);
-  }
-
-  const data = await response.json();
-  return data.content?.[0]?.text?.trim() ?? '';
+  return data.content ?? '';
 }
