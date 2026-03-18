@@ -42,3 +42,5 @@ scripts/musopen_feature_vectors.json
 __pycache__/
 *.pyc
 .env
+.vercel
+.env*.local
