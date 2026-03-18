@@ -137,7 +137,7 @@ function App() {
   };
 
   const handleSelectMatch = (result: SimilarityResult) => {
-    const baseUrl = process.env.REACT_APP_R2_PUBLIC_URL || 'https://pub-2014bbd27fde402e8d8cd1a67fe4fbcd.r2.dev';
+    const baseUrl = process.env.REACT_APP_R2_PUBLIC_URL!;
     const r2Key = result.file.replace(/^\.\//, '').replace(/^data\//, '');
     const encodedKey = r2Key.split('/').map(segment => encodeURIComponent(segment)).join('/');
     const r2Url = `${baseUrl}/${encodedKey}`;

@@ -2,7 +2,7 @@
 
 A browser-based tool for film and TV editors working with temp music. Drop in a reference track — SceneSync extracts its acoustic fingerprint, finds royalty-free tracks that work the same way acoustically, and explains in plain language why each match fits.
 
-No server. No data leaving your device.
+All audio processing happens client-side. Raw audio never leaves your browser.
 
 ## What it does
 
@@ -14,14 +14,12 @@ The explanation layer is what makes it meaningful — not just a similarity scor
 
 ## How it works
 
-All processing happens client-side:
-
 1. Audio is decoded via the Web Audio API
 2. Feature extraction runs in a **Web Worker** (off the main thread) using [Meyda](https://meyda.js.org/) — extracts RMS, ZCR, spectral centroid, spectral spread, spectral flatness, MFCCs (×13), and chroma (×12)
 3. Each feature is stored as percentile snapshots [p25, p50, p75] across frames — capturing the arc of the track, not just a mean
 4. The 90-value feature vector is compared against a pre-analyzed library using cosine similarity after z-score normalization
-5. Top matches are returned with similarity scores and plain-language acoustic explanations via a provider-agnostic LLM layer
-6. Feature vectors, explanations, and track history are stored locally in **IndexedDB** — nothing leaves the device
+5. Top matches are returned with similarity scores and plain-language acoustic explanations via a provider-agnostic LLM layer (serverless proxy — API keys never reach the browser)
+6. Feature vectors, explanations, and track history are stored locally in **IndexedDB**
 
 ## Royalty-free library
 
@@ -40,11 +38,12 @@ The library is actively expanding — next additions will prioritize sparse/inti
 | Layer | Technology |
 |---|---|
 | Frontend | React 19 + TypeScript + Tailwind CSS |
-| Audio analysis | Web Audio API + Meyda |
+| Audio analysis | Web Audio API + Meyda (in Web Worker) |
 | Similarity search | Cosine similarity on z-score normalized feature vectors |
-| Explanation layer | Provider-agnostic LLM (DeepSeek default, swappable to Claude/OpenAI) |
-| Local storage | IndexedDB |
+| Explanation layer | Provider-agnostic LLM via Vercel serverless proxy (DeepSeek default, swappable to Claude/OpenAI) |
+| Local storage | IndexedDB (feature vectors, explanations, track history) |
 | Audio streaming | Cloudflare R2 |
+| Deployment | Vercel |
 | Build | Create React App + Webpack |
 | Data pipeline | Node.js (Meyda-aligned extraction) + Python (curation, merging, QA) |
 
@@ -58,33 +57,43 @@ The library is actively expanding — next additions will prioritize sparse/inti
 - Five acoustic visualizations: harmonic content (chroma), energy/RMS, brightness, texture, frequency width
 - Track history with full playback — persisted across sessions via Cloudflare R2 streaming
 - Fully responsive — mobile and desktop layouts
-- Privacy-first: all audio and analysis stays in the browser
+- Privacy-first: all audio analysis stays in the browser — only semantic labels are sent to the LLM
 
 ## Getting started
 ```bash
 npm install
-npm start        # development server
+vercel dev       # local dev (runs serverless functions)
 npm run build    # production build
 ```
 
-Requires a `.env.local` with:
+Environment variables in `.env`:
 ```
-REACT_APP_DEEPSEEK_API_KEY=...     # or REACT_APP_ANTHROPIC_API_KEY / REACT_APP_OPENAI_API_KEY
 REACT_APP_R2_PUBLIC_URL=...        # Cloudflare R2 public bucket URL
 ```
 
+Environment variables in Vercel dashboard (Production + Preview):
+```
+DEEPSEEK_API_KEY=...               # required if LLM_PROVIDER=deepseek (default)
+ANTHROPIC_API_KEY=...              # required if LLM_PROVIDER=anthropic
+OPENAI_API_KEY=...                 # required if LLM_PROVIDER=openai
+LLM_PROVIDER=deepseek             # optional — defaults to deepseek
+```
+
+For local development with serverless functions, run `vercel env pull` to sync env vars from Vercel, then use `vercel dev`.
+
 ## Project structure
 ```
+api/
+  explain.js            # Vercel serverless function — proxies LLM calls, rate-limited
 src/
   components/    # AudioPlayer, FeatureVisualizations, SimilarityResults,
                  # TrackExplanation, TrackHistory, Sidebar, MainContent, etc.
   hooks/         # useSimilaritySearch, useTrackExplanation,
-                 # useExplanationCache, useTrackHistory
+                 # useExplanationCache, useTrackHistory, useFileHandler
   workers/       # Web Worker for off-thread feature extraction
   utils/         # featureExtraction.ts, parseTrackDisplay.ts
   services/      # audioStorageService, similarityService, explanationService
-  config/        # llmProvider.ts — swap LLM providers in one line
-                 # rankConfig.ts — match card color tiers
+  config/        # rankConfig.ts — match card color tiers
 public/
   data/          # feature_vectors.json — 243-track library loaded at runtime
 scripts/
@@ -93,6 +102,7 @@ scripts/
   extract_musopen_features.py   # Musopen extraction
   curate_library.py             # FMA diversity curation
   merge_library.py              # Merge → public/data/feature_vectors.json
+  sync_previews.js              # Sync audio previews to Cloudflare R2
   qa_sample.py                  # Random sample + acoustic summary for QA
 ```
 
@@ -111,4 +121,4 @@ Extraction parameters match the browser exactly: `SAMPLE_RATE=44100`, `BUFFER_SI
 
 ## Swapping LLM providers
 
-The explanation layer is provider-agnostic. To switch from DeepSeek to Claude or OpenAI, change `ACTIVE_PROVIDER` in `src/config/llmProvider.ts` and set the corresponding API key in `.env.local`.
+The explanation layer is provider-agnostic. To switch from DeepSeek to Claude or OpenAI, set `LLM_PROVIDER` in the Vercel dashboard and add the corresponding API key. No code changes required.
