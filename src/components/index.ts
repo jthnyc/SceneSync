@@ -2,7 +2,6 @@
 export { default as Header } from './Header';
 export { default as Sidebar } from './Sidebar';
 export { default as MainContent } from './MainContent';
-export { default as ErrorDisplay } from './ErrorDisplay';
 export { default as UploadZone } from './UploadZone';
 export { default as TrackHistory } from './TrackHistory';
 export { TrackHistoryItem } from './TrackHistoryItem';
