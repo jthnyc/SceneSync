@@ -10,22 +10,19 @@
 // The public API is unchanged — callers don't need to know a worker is involved.
 
 import {
-  FeatureTimeSeries,
   WorkerOutboundMessage,
   HOP_SIZE,
   BUFFER_SIZE,
 } from '../workers/featureExtraction.types';
 import { FeatureVector } from '../workers/featureExtraction.types';
 
-// Re-export so existing imports from this file continue to work unchanged.
 // FeatureVisualizations imports HOP_SIZE from here — keeping that working.
-export type { FeatureTimeSeries };
 export { HOP_SIZE, BUFFER_SIZE };
 
 export const extractBrowserCompatibleFeatures = (
   audioBuffer: AudioBuffer,
   onProgress?: (percent: number, stage: string) => void
-): Promise<{ features: number[]; featureVector: FeatureVector; timeSeries: FeatureTimeSeries }> => {
+): Promise<{ featureVector: FeatureVector; }> => {
   return new Promise((resolve, reject) => {
     // Spawn a fresh worker for each extraction. Workers are cheap to create
     // and this avoids any state leaking between tracks.
@@ -52,9 +49,7 @@ export const extractBrowserCompatibleFeatures = (
         case 'RESULT':
           worker.terminate();
           resolve({
-            features: msg.features,
-            featureVector: msg.featureVector,  // ← add this
-            timeSeries: msg.timeSeries,
+            featureVector: msg.featureVector,
           });
           break;
 
@@ -80,18 +75,4 @@ export const extractBrowserCompatibleFeatures = (
       [signal.buffer]
     );
   });
-};
-
-// Backward compatibility — some callers may import these aliases.
-export const extractAudioFeatures = extractBrowserCompatibleFeatures;
-
-export const extractMFCC = async (
-  audioData: Float32Array,
-  sampleRate: number
-): Promise<number[][]> => {
-  // This path is rarely called directly and would require its own worker
-  // invocation. For now, keep the old synchronous behaviour as a fallback
-  // so nothing breaks. If this becomes a performance concern, revisit.
-  console.warn('extractMFCC called directly — consider routing through extractBrowserCompatibleFeatures');
-  return [[]];
 };

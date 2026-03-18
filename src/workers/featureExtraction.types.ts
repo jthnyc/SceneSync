@@ -1,12 +1,3 @@
-export interface FeatureTimeSeries {
-  rms: number[];
-  zcr: number[];
-  spectralCentroid: number[];
-  spectralRolloff: number[];
-  tempo: number;
-  sampleRate: number;
-}
-
 export const HOP_SIZE = 512;
 export const BUFFER_SIZE = 2048;
 
@@ -65,9 +56,7 @@ export interface ProgressMessage {
 
 export interface ResultMessage {
   type: 'RESULT';
-  features: number[];        // flat 44-value vector — kept for classifier
   featureVector: FeatureVector; // percentile snapshot — for similarity search
-  timeSeries: FeatureTimeSeries;
 }
 
 export interface ErrorMessage {

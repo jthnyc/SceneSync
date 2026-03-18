@@ -6,8 +6,8 @@
 //   Single vector  → reference track description ("What am I hearing?")
 //   Two vectors    → match explanation ("Why does this work for my reference?")
 //
-// Provider-agnostic: all provider differences are handled via llmProvider.ts.
-// To swap models, change ACTIVE_PROVIDER in that file — nothing here changes.
+// Provider-agnostic: LLM provider selection handled server-side in api/explain.js.
+// To swap models, change LLM_PROVIDER env var in Vercel — nothing here changes.
 
 import { FeatureVector } from '../workers/featureExtraction.types';
 

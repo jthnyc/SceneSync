@@ -8,23 +8,9 @@ import {
   HOP_SIZE,
   BUFFER_SIZE,
   FeatureVector,
-  FeatureTimeSeries,
   WorkerInboundMessage,
   WorkerOutboundMessage,
 } from './featureExtraction.types';
-
-// ── Helpers ───────────────────────────────────────────────────────────────
-
-function mean(arr: number[]): number {
-  if (arr.length === 0) return 0;
-  return arr.reduce((sum, val) => sum + val, 0) / arr.length;
-}
-
-function std(arr: number[]): number {
-  if (arr.length === 0) return 0;
-  const m = mean(arr);
-  return Math.sqrt(arr.reduce((sum, val) => sum + (val - m) ** 2, 0) / arr.length);
-}
 
 /**
  * Linear interpolation percentile (same method librosa uses).
@@ -94,37 +80,6 @@ function extractChroma(signal: Float32Array, sampleRate: number): number[][] {
   return chromaArrays.map(arr => (arr.length > 0 ? arr : [0]));
 }
 
-function estimateTempo(rmsFrames: number[], sampleRate: number): number {
-  const frameRate = sampleRate / HOP_SIZE;
-  const threshold = mean(rmsFrames) + 0.3 * std(rmsFrames);
-  const minSpacing = Math.floor(0.2 * frameRate);
-  const onsets: number[] = [];
-
-  for (let i = minSpacing; i < rmsFrames.length - 1; i++) {
-    if (
-      rmsFrames[i] > threshold &&
-      rmsFrames[i] > rmsFrames[i - 1] &&
-      rmsFrames[i] > rmsFrames[i + 1] &&
-      (onsets.length === 0 || i - onsets[onsets.length - 1] > minSpacing)
-    ) {
-      onsets.push(i);
-    }
-  }
-
-  if (onsets.length < 2) return 120;
-
-  const intervals: number[] = [];
-  for (let i = 1; i < onsets.length; i++) intervals.push(onsets[i] - onsets[i - 1]);
-  intervals.sort((a, b) => a - b);
-  const medianInterval = intervals[Math.floor(intervals.length / 2)];
-
-  let tempo = (60 * frameRate) / medianInterval;
-  while (tempo > 180) tempo /= 2;
-  while (tempo < 80) tempo *= 2;
-
-  return Math.max(60, Math.min(200, Math.round(tempo)));
-}
-
 // ── Progress helper ───────────────────────────────────────────────────────
 
 function postProgress(percent: number, stage: string): void {
@@ -137,11 +92,9 @@ function postProgress(percent: number, stage: string): void {
 self.onmessage = (e: MessageEvent<WorkerInboundMessage>) => {
   if (e.data.type !== 'EXTRACT') return;
 
-  const { signal, sampleRate, duration } = e.data;
+  const { signal, sampleRate } = e.data;
 
   try {
-    const features: number[] = [];
-
     // Pass 1 — RMS
     postProgress(0, 'Analyzing energy...');
     const rms = extractFramedFeature(signal, sampleRate, 'rms');
@@ -154,57 +107,23 @@ self.onmessage = (e: MessageEvent<WorkerInboundMessage>) => {
     postProgress(28, 'Analyzing brightness...');
     const centroid = extractFramedFeature(signal, sampleRate, 'spectralCentroid');
 
-    // Pass 4 — Spectral Rolloff  (used only for timeSeries + classifier)
-    postProgress(38, 'Analyzing frequency shape...');
-    const rolloff = extractFramedFeature(signal, sampleRate, 'spectralRolloff');
-
-    // Pass 5 — Spectral Spread
-    postProgress(48, 'Analyzing spectral spread...');
+    // Pass 4 — Spectral Spread
+    postProgress(42, 'Analyzing spectral spread...');
     const spread = extractFramedFeature(signal, sampleRate, 'spectralSpread');
 
-    // Pass 6 — Spectral Flatness (was faked as spectral contrast — now real)
-    postProgress(58, 'Analyzing tonal texture...');
+    // Pass 5 — Spectral Flatness
+    postProgress(56, 'Analyzing tonal texture...');
     const flatness = extractFramedFeature(signal, sampleRate, 'spectralFlatness');
 
-    // Pass 7 — MFCCs (most expensive)
-    postProgress(66, 'Analyzing timbre...');
+    // Pass 6 — MFCCs (most expensive)
+    postProgress(68, 'Analyzing timbre...');
     const mfccs = extractMFCCs(signal, sampleRate);
 
-    // Pass 8 — Chroma
+    // Pass 7 — Chroma
     postProgress(88, 'Analyzing pitch content...');
     const chroma = extractChroma(signal, sampleRate);
 
     postProgress(98, 'Assembling features...');
-
-    const tempo = estimateTempo(rms, sampleRate);
-
-    const timeSeries: FeatureTimeSeries = {
-      rms,
-      zcr,
-      spectralCentroid: centroid,
-      spectralRolloff: rolloff,
-      tempo,
-      sampleRate,
-    };
-
-    // ── Flat vector for classifier (unchanged shape) ──────────────────────
-
-    features.push(duration);
-    features.push(sampleRate);
-    features.push(tempo);
-    features.push(Math.round((tempo / 60) * duration));
-    features.push(mean(rms));
-    features.push(std(rms));
-    features.push(rms.reduce((a, b) => Math.max(a, b), -Infinity));
-    features.push(mean(zcr));
-    features.push(mean(centroid));
-    features.push(std(centroid));
-    features.push(mean(rolloff));
-    features.push(mean(spread));
-    for (let i = 0; i < 13; i++) features.push(mean(mfccs[i]));
-    // spectral contrast slots — kept as flatness offsets for classifier compat
-    for (let i = 0; i < 7; i++) features.push(mean(flatness) + i * 0.1);
-    for (let i = 0; i < 12; i++) features.push(mean(chroma[i]));
 
     // ── Percentile snapshot vector for similarity search ──────────────────
 
@@ -241,13 +160,11 @@ self.onmessage = (e: MessageEvent<WorkerInboundMessage>) => {
       chroma_12: toTriple(chroma[11]),
     };
 
-    console.log(`[worker] ✅ Extracted ${features.length} features + featureVector (90 values)`);
+    console.log('[worker] ✅ Extracted featureVector (90 values)');
 
     const resultMsg: WorkerOutboundMessage = {
       type: 'RESULT',
-      features,
       featureVector,
-      timeSeries,
     };
 
     self.postMessage(resultMsg);
