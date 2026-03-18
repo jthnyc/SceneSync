@@ -1,6 +1,40 @@
+// ── In-memory rate limiter ──────────────────────────────────────────────
+// Tracks requests per IP within a rolling window. Resets on cold start,
+// which is acceptable for a portfolio project — see ARCHITECTURE.md.
+
+const RATE_LIMIT = 30;          // max requests per window
+const WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+const requestLog = new Map();   // IP → [timestamp, timestamp, ...]
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = requestLog.get(ip) || [];
+
+  // Drop entries outside the window
+  const recent = timestamps.filter(t => now - t < WINDOW_MS);
+
+  if (recent.length >= RATE_LIMIT) {
+    requestLog.set(ip, recent);
+    return true;
+  }
+
+  recent.push(now);
+  requestLog.set(ip, recent);
+  return false;
+}
+
+// ── Handler ─────────────────────────────────────────────────────────────
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Rate limit by IP
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+  if (isRateLimited(ip)) {
+    return res.status(429).json({ error: 'Too many requests — try again later' });
   }
 
   const PROVIDER_CONFIGS = {
