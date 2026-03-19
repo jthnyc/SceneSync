@@ -2,7 +2,7 @@
 //   File drop → decode → extract → similarity search → results
 //
 // featureVector is stored in state and exposed in the return value
-// so TrackExplanation can access it for the "What am I hearing?" button.
+// so useExplanationCache can pass it to the LLM explanation layer.
 
 import { useState, useCallback } from 'react';
 import { extractBrowserCompatibleFeatures } from '../utils/featureExtraction';

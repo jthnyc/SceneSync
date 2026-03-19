@@ -195,7 +195,7 @@ const MainContent: React.FC<MainContentProps> = ({
       {featureVector && (
         <div className="mt-6">
           <FeatureVisualizations
-            features={featureVector}
+            features={activeTrack?.type === 'match' ? activeTrack.features ?? undefined : featureVector ?? undefined}
             referenceFeatures={referenceFeatures}
             showComparison={activeTrack?.type === 'match'}
           />

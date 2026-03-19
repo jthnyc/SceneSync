@@ -1,37 +1,21 @@
 /**
- * Branch: feat/cross-source-weighting
- * 
- * Changes from current:
- *   1. Add DIMENSION_WEIGHTS array (DROP_LOUD_DW_COARSE scheme)
- *   2. Apply weights in cosineSimilarity before dot product
- *   3. Apply weights in z-score normalization (zero-weighted dims get zeroed)
+ * ── Dimension Weighting (DROP_LOUD_DW_COARSE) ────────────────────────
  * 
  * What this does:
  *   - Drops RMS (3 dims) and MFCC 1 (3 dims) — these encode loudness/production level
  *   - Half-weights MFCC 2-3 (6 dims) — coarse spectral shape, partially production-dependent
- *   - Half-weights all Chroma (36 dims) — harmonic saturation varies by production style
+ *   - 0.75-weights all Chroma (36 dims) — harmonic saturation varies by production style
  *   - Full weight on everything else: ZCR, Centroid, Spread, Flatness, MFCCs 4-13
  * 
- * What this preserves:
- *   - FMA-to-FMA match quality (actually improves slightly)
- *   - Within-Musopen ranking coherence
+ * Why:
+ *   - Musopen (classical) tracks were systematically ranked lower against FMA references
+ *   - Root cause: loudness and harmonic density differences, not musical character
+ *   - See scripts/INVESTIGATION_NOTES.md for full methodology
  * 
- * What this improves:
- *   - Musopen tracks move from avg rank ~54 to ~33 when searched from FMA references
- *   - Musopen score improves from 0.31 to 0.44
- *   - Cross-source matches surface when musically warranted
- * 
- * ─────────────────────────────────────────────────────────────────────
- * 
- * IMPLEMENTATION NOTES:
- * 
- * The weight array follows the same flatten order as the existing code:
+ * Weight array follows the flatten order:
  *   [rms×3, zcr×3, centroid×3, spread×3, flatness×3,
  *    mfcc_1×3, mfcc_2×3, ..., mfcc_13×3,
  *    chroma_1×3, chroma_2×3, ..., chroma_12×3]
- * 
- * Only two functions change: cosineSimilarity and the normalization step.
- * The flatten() function stays exactly the same.
  */
 
 import { FeatureVector } from '../workers/featureExtraction.types';
