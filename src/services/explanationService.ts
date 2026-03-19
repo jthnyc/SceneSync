@@ -354,6 +354,9 @@ async function callProvider(prompt: string): Promise<string> {
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+    if (response.status === 429) {
+      throw new Error('RATE_LIMITED');
+    }
     throw new Error(err.error || `API error ${response.status}`);
   }
 

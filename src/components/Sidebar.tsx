@@ -1,6 +1,7 @@
 import React from 'react';
 import type { AnalyzedTrack } from '../types/audio';
 import { StorageInfo } from './PrivacyNotice';
+import ExtractionProgress from './ExtractionProgress';
 import type { SimilarityResult } from '../services/similarityService';
 import { TrackHistory, EmptyState, SimilarityResults } from './';
 
@@ -16,6 +17,7 @@ interface SidebarProps {
   isSearching: boolean;
   onSelectMatch: (result: SimilarityResult) => void;
   activeMatchId?: string;
+  progressState: { progress: number; stage: string };
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -30,10 +32,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   isSearching,
   onSelectMatch,
   activeMatchId,
+  progressState,
 }) => {
   return (
     <div className="lg:col-span-1 lg:order-1 bg-gray-800/50 p-4 sm:p-6 rounded-xl border border-gray-700">
-      {trackHistory.length === 0 && <EmptyState />}
+      {trackHistory.length === 0 && progressState.progress === 0 && <EmptyState />}
+
+      {progressState.progress > 0 && (
+        <ExtractionProgress progress={progressState.progress} stage={progressState.stage} />
+      )}
 
       <div className="hidden lg:block">
         <SimilarityResults

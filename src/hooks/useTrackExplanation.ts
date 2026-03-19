@@ -29,11 +29,13 @@ export const useTrackExplanation = () => {
       return result; // returned so component can cache it directly
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(
-        message.includes('Missing API key')
-          ? 'Explanation unavailable — API key not configured.'
-          : 'Could not generate explanation. Try again in a moment.'
-      );
+      if (message === 'RATE_LIMITED') {
+        setError('Explanation service is busy — try again in a moment.');
+      } else if (message.includes('Missing API key')) {
+        setError('Explanation unavailable — API key not configured.');
+      } else {
+        setError('Could not generate explanation. Try again in a moment.');
+      }
       console.error('[useTrackExplanation]', err);
       return null;
     } finally {
@@ -60,11 +62,13 @@ export const useTrackExplanation = () => {
       return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(
-        message.includes('Missing API key')
-          ? 'Explanation unavailable — API key not configured.'
-          : 'Could not generate explanation. Try again in a moment.'
-      );
+      if (message === 'RATE_LIMITED') {
+        setError('Explanation service is busy — try again in a moment.');
+      } else if (message.includes('Missing API key')) {
+        setError('Explanation unavailable — API key not configured.');
+      } else {
+        setError('Could not generate explanation. Try again in a moment.');
+      }
       console.error('[useTrackExplanation.explainMatch]', err);
       return null;
     } finally {
