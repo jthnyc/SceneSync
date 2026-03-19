@@ -30,6 +30,7 @@ function App() {
     results: similarityResults,
     featureVector: referenceFeatureVector,
     duration: referenceDuration,
+    progressState,
     findSimilar,
     findSimilarFromVector,
     clearResults,
@@ -236,6 +237,7 @@ function App() {
             isSearching={isSearching}
             onSelectMatch={handleSelectMatch}
             activeMatchId={selectedMatchFile}
+            progressState={progressState}
           />
         </div>
       </div>
