@@ -102,6 +102,7 @@ scripts/
   extract_musopen_features.py   # Musopen extraction
   curate_library.py             # FMA diversity curation
   merge_library.py              # Merge → public/data/feature_vectors.json
+  prepare_previews.sh           # Generate trimmed previews for R2 upload
   sync_previews.js              # Sync audio previews to Cloudflare R2
   qa_sample.py                  # Random sample + acoustic summary for QA
 ```
