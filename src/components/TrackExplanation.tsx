@@ -64,10 +64,19 @@ const TrackExplanation: React.FC<TrackExplanationProps> = ({
 
       {/* Explanation readout */}
       {displayExplanation && !isExplaining && (
-        <div className="mt-3 p-4 bg-gray-800/60 border border-gray-700/40 rounded-lg">
-          {activeTitle && (
-            <div className="text-xs font-medium text-primary-400 mb-2 truncate">
-              {displayMode === 'match' ? `Why this matches · ${activeTitle}` : activeTitle}
+        <div className={`mt-3 p-4 rounded-lg ${
+          displayMode === 'match'
+            ? 'bg-gray-800/60 border-l-2 border-l-amber-500/60 border border-gray-700/40'
+            : 'bg-gray-800/60 border border-gray-700/40'
+        }`}>
+          {displayMode === 'match' && (
+            <h4 className="text-sm font-semibold text-amber-400 mb-2">
+              Why this matches{activeTitle ? ` · ${activeTitle}` : ''}
+            </h4>
+          )}
+          {displayMode === 'reference' && (
+            <div className="text-sm font-semibold text-primary-400 mb-2">
+              What you're hearing
             </div>
           )}
           <p className="text-sm text-gray-200 leading-relaxed">

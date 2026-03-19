@@ -279,7 +279,6 @@ export const FeatureVisualizations: React.FC<FeatureVisualizationsProps> = ({
               domain={[0, 1]}
               ticks={[0, 0.25, 0.5, 0.75, 1]}
               tickFormatter={(v: number) => v.toFixed(1)}
-              label={{ value: 'Relative strength', angle: -90, position: 'insideLeft', offset: 10, style: { fill: '#6B7280', fontSize: 10 } }}
             />
             <Tooltip
               {...tooltipStyle}
