@@ -34,7 +34,10 @@ export const useExplanationCache = ({
 
   const explainReference = useCallback(async (
     featureVector: FeatureVector,
-    trackId?: string  // optional override — used when selectedTrackId not yet set
+    // trackId override: addTrack resolves with the new ID before React
+    // batches the selectedTrackId state update. Without this, the effect
+    // would read stale (null) selectedTrackId on first upload.
+    trackId?: string
     ): Promise<void> => {
     const id = trackId ?? selectedTrackId;
     if (!id) return;
@@ -75,6 +78,9 @@ export const useExplanationCache = ({
 
     if (storageAvailable) {
       const existingMatchExplanations = track?.matchExplanations ?? {};
+      // Known issue #12: read-modify-write on matchExplanations is not atomic.
+      // Two rapid clicks could cause one write to overwrite the other.
+      // Low probability in practice — see ARCHITECTURE.md known issues.
       updateTrack(selectedTrackId, {
         matchExplanations: {
           ...existingMatchExplanations,

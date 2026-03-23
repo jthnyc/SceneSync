@@ -81,6 +81,10 @@ const MfccChart: React.FC<MfccChartProps> = ({ data }) => (
 // ── Chart 2: Harmonic Content (Chroma) ───────────────────────────────────
 // Normalized to 0–1 per track so the Y-axis reads as "relative strength"
 // (1 = most prominent pitch class in this track, 0 = absent).
+//
+// Per-track max normalization: divides each pitch class by the track's
+// strongest chroma bin. Without this, raw magnitudes vary too much between
+// tracks for the Y-axis to be meaningful in comparison mode.
 
 function normalizeChroma(fv: FeatureVector): number[] {
   const raw = CHROMA_LABELS.map((_, i) => {
