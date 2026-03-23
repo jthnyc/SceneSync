@@ -34,7 +34,9 @@ function toTriple(arr: number[]): [number, number, number] {
 }
 
 // ── Feature extraction ────────────────────────────────────────────────────
-
+// Meyda operates on fixed-size buffers, so we slide a window across the
+// decoded signal and collect one value per frame. The caller reduces these
+// per-frame arrays to [p25, p50, p75] percentile snapshots.
 function extractFramedFeature(
   signal: Float32Array,
   sampleRate: number,
@@ -43,6 +45,8 @@ function extractFramedFeature(
   const values: number[] = [];
   for (let i = 0; i < signal.length - BUFFER_SIZE; i += HOP_SIZE) {
     const frame = signal.slice(i, i + BUFFER_SIZE);
+    // Cast: Meyda's TS types don't export the static extract() method.
+    // The runtime API is stable — this is a typings gap, not a workaround.
     const result = (Meyda as any).extract(featureName, frame, {
       sampleRate,
       bufferSize: BUFFER_SIZE,

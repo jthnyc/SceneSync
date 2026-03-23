@@ -14,6 +14,14 @@ import { parseTrackDisplay } from './utils/parseTrackDisplay';
 
 import './index.css';
 
+// ── App ───────────────────────────────────────────────────────────────────
+// Composition layer only — wires hooks together and passes props down.
+// No business logic lives here. Each concern is owned by a dedicated hook:
+//   useFileHandler        → file selection, validation, post-extraction chain
+//   useTrackHistory       → track history state, IndexedDB persistence
+//   useExplanationCache   → explanation fetching, caching, LLM API layer
+//   useSimilaritySearch   → feature extraction, cosine similarity search
+
 function App() {
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [activeTrack, setActiveTrack] = useState<{
@@ -138,6 +146,10 @@ function App() {
   };
 
   const handleSelectMatch = (result: SimilarityResult) => {
+    // Build the R2 streaming URL from the library's relative file path.
+    // Paths in feature_vectors.json use "./data/fma_small/..." or "data/musopen/..."
+    // — strip the leading prefixes, then encode each path segment individually
+    // so spaces in Musopen filenames don't break the URL.
     const baseUrl = process.env.REACT_APP_R2_PUBLIC_URL!;
     const r2Key = result.file.replace(/^\.\//, '').replace(/^data\//, '');
     const encodedKey = r2Key.split('/').map(segment => encodeURIComponent(segment)).join('/');

@@ -237,6 +237,10 @@ class AudioStorageService {
       const store = transaction.objectStore(STORE_NAME);
 
       const getRequest = store.get(id);
+      // Read-modify-write: reads existing record, merges partial data, writes back.
+      // Not atomic across concurrent calls — see known issue #12 (match explanation
+      // write race). Two rapid updateTrackData calls on the same ID could cause
+      // one to overwrite the other's changes.
       getRequest.onsuccess = () => {
         const existing = getRequest.result as StoredTrack | undefined;
         if (!existing) {

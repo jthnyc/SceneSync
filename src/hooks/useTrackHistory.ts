@@ -32,6 +32,9 @@ export const useTrackHistory = () => {
   const [storageStats, setStorageStats] = useState({ count: 0, size: 0 });
   const [storageAvailable, setStorageAvailable] = useState(true);
   const [storageFull, setStorageFull] = useState(false);
+
+  // Dedup guard: prevents duplicate addTrack calls from React 18 StrictMode
+  // double-invoking effects. Not an ID registry — only checked during addTrack.
   const storedTrackIds = useRef<Set<string>>(new Set());
 
   const updateStats = useCallback(async () => {
@@ -100,6 +103,9 @@ export const useTrackHistory = () => {
 
     if (storageAvailable) {
       audioStorage.storeTrack(trackId, file, newTrack)
+      // Two-step write: track shell is stored first (storeTrack), then
+      // featureVector is patched in (updateTrackData). Not atomic — but
+      // acceptable because the feature vector is also held in React state.
         .then(() => {
           audioStorage.updateTrackData(trackId, { featureVector });
           setTrackHistory(prev =>

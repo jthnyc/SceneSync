@@ -43,6 +43,9 @@ export const useTrackExplanation = () => {
     }
   }, []);
 
+  // Error handling is duplicated between explain() and explainMatch()
+  // intentionally — keeps each path self-contained so console logs identify
+  // which function errored, and avoids a shared helper that obscures the call site.
   const explainMatch = useCallback(async (
     referenceVector: FeatureVector | null,
     matchVector: FeatureVector | null

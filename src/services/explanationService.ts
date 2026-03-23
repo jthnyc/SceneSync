@@ -72,6 +72,11 @@ In 2–3 sentences: tell the editor why this suggestion will serve the same scen
 // Each returns { label, magnitude } or null if the difference is not
 // perceptually meaningful. magnitude is normalized [0, 1] — used to sort
 // divergent traits so the most significant difference leads the prompt.
+//
+// Range constants (120 bins, 0.2 RMS, 80 bins, etc.) are empirical —
+// derived from observing value distributions across the 243-track library.
+// They are not Meyda spec values. Re-evaluate if the library grows
+// significantly or extraction parameters change.
 
 type TraitComparison = { label: string; magnitude: number };
 
