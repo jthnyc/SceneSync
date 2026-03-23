@@ -36,6 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   return (
     <div className="lg:col-span-1 lg:order-1 bg-gray-800/50 p-4 sm:p-6 rounded-xl border border-gray-700">
+      <h2 className="sr-only">Results and History</h2>
       {trackHistory.length === 0 && progressState.progress === 0 && <EmptyState />}
 
       {progressState.progress > 0 && (

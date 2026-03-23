@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { useSimilaritySearch } from './hooks/useSimilaritySearch';
 import { useTrackHistory } from './hooks/useTrackHistory';
@@ -23,6 +23,7 @@ import './index.css';
 //   useSimilaritySearch   → feature extraction, cosine similarity search
 
 function App() {
+  const playerRef = useRef<HTMLDivElement>(null);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [activeTrack, setActiveTrack] = useState<{
     type: 'reference' | 'match';
@@ -131,6 +132,8 @@ function App() {
           source: 'Stored file',
         };
         setActiveTrack({ type: 'reference', file, metadata });
+        // Shift focus to the player so keyboard users land on the loaded track
+        requestAnimationFrame(() => playerRef.current?.focus());
         if (track.featureVector) {
           findSimilarFromVector(track.featureVector);
         } else {
@@ -163,6 +166,7 @@ function App() {
     });
 
     setSelectedMatchFile(result.file);
+    requestAnimationFrame(() => playerRef.current?.focus());
   };
 
   const handleClearActiveTrack = () => {
@@ -212,6 +216,7 @@ function App() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <MainContent
+            playerRef={playerRef}
             selectedFile={selectedFile}
             selectedTrackId={selectedTrackId}
             trackHistory={trackHistory}

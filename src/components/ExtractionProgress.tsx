@@ -45,7 +45,7 @@ const ExtractionProgress: React.FC<ExtractionProgressProps> = ({ progress, stage
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="text-gray-500 text-xs mt-2">{progress}%</p>
+        <p className="text-gray-400 text-xs mt-2">{progress}%</p>
       </div>
     </div>
   );
