@@ -13,6 +13,7 @@ import type { TrackDisplay } from '../utils/parseTrackDisplay';
 import type { FeatureVector } from '../workers/featureExtraction.types';
 
 interface MainContentProps {
+  playerRef?: React.RefObject<HTMLDivElement | null >;
   selectedFile: File | null;
   selectedTrackId: string | null;
   trackHistory: AnalyzedTrack[];
@@ -44,6 +45,7 @@ interface MainContentProps {
 }
 
 const MainContent: React.FC<MainContentProps> = ({
+  playerRef,
   selectedFile,
   selectedTrackId,
   trackHistory,
@@ -112,8 +114,17 @@ const MainContent: React.FC<MainContentProps> = ({
     }
   };
 
+  const liveMessage = activeTrack?.type === 'match'
+    ? `Now playing match: ${activeTrack.metadata.title}`
+    : activeTrack?.type === 'reference'
+    ? `Analyzing: ${activeTrack.metadata.title}`
+    : '';
+
   return (
     <div className="lg:col-span-2 lg:order-2 bg-gray-800/50 p-4 sm:p-6 rounded-xl border border-gray-700">
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {liveMessage}
+      </div>
       <h2 className="text-xl font-semibold mb-4 text-primary-400">Upload Audio</h2>
 
       <UploadZone
@@ -123,7 +134,7 @@ const MainContent: React.FC<MainContentProps> = ({
 
       {/* Main Audio Player */}
       {activeTrack && (
-        <div className="mt-4">
+        <div className="mt-4" ref={playerRef} tabIndex={-1}>
           <AudioPlayer
             audioFile={activeTrack.file}
             metadata={activeTrack.metadata}

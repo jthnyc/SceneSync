@@ -35,15 +35,15 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
       <div className="flex justify-between items-center pt-2">
         <div className="flex items-center gap-1.5">
           <div className={`w-2 h-2 rounded-full transition-colors ${progress >= 30 ? 'bg-primary-400' : 'bg-gray-600'}`} />
-          <span className="text-xs text-gray-500">Decode</span>
+          <span className="text-xs text-gray-400">Decode</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className={`w-2 h-2 rounded-full transition-colors ${progress >= 80 ? 'bg-primary-400' : 'bg-gray-600'}`} />
-          <span className="text-xs text-gray-500">Extract</span>
+          <span className="text-xs text-gray-400">Extract</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className={`w-2 h-2 rounded-full transition-colors ${progress >= 100 ? 'bg-primary-400' : 'bg-gray-600'}`} />
-          <span className="text-xs text-gray-500">Classify</span>
+          <span className="text-xs text-gray-400">Classify</span>
         </div>
       </div>
     </div>

@@ -56,37 +56,39 @@ const TrackExplanation: React.FC<TrackExplanationProps> = ({
     <div className="mt-4">
       {/* Loading state */}
       {isExplaining && (
-        <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+        <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
           <Loader2 size={12} className="animate-spin text-primary-400" />
           {isMatchMode ? 'Analyzing why this matches...' : 'Listening...'}
         </div>
       )}
 
       {/* Explanation readout */}
-      {displayExplanation && !isExplaining && (
-        <div className={`mt-3 p-4 rounded-lg ${
-          displayMode === 'match'
-            ? 'bg-gray-800/60 border-l-2 border-l-amber-500/60 border border-gray-700/40'
-            : 'bg-gray-800/60 border border-gray-700/40'
-        }`}>
-          {displayMode === 'match' && (
-            <h4 className="text-sm font-semibold text-amber-400 mb-2">
-              Why this matches{activeTitle ? ` · ${activeTitle}` : ''}
-            </h4>
-          )}
-          {displayMode === 'reference' && (
-            <div className="text-sm font-semibold text-primary-400 mb-2">
-              What you're hearing
-            </div>
-          )}
-          <p className="text-sm text-gray-200 leading-relaxed">
-            {displayExplanation}
-          </p>
-          <p className="text-xs text-gray-600 mt-2">
-            {displayMode === 'match' ? 'Match analysis · AI-assisted' : 'Acoustic analysis · AI-assisted'}
-          </p>
-        </div>
-      )}
+      <div aria-live="polite" aria-atomic="true">
+        {displayExplanation && !isExplaining && (
+          <div className={`mt-3 p-4 rounded-lg ${
+            displayMode === 'match'
+              ? 'bg-gray-800/60 border-l-2 border-l-amber-500/60 border border-gray-700/40'
+              : 'bg-gray-800/60 border border-gray-700/40'
+          }`}>
+            {displayMode === 'match' && (
+              <h4 className="text-sm font-semibold text-amber-400 mb-2">
+                Why this matches{activeTitle ? ` · ${activeTitle}` : ''}
+              </h4>
+            )}
+            {displayMode === 'reference' && (
+              <div className="text-sm font-semibold text-primary-400 mb-2">
+                What you're hearing
+              </div>
+            )}
+            <p className="text-sm text-gray-200 leading-relaxed">
+              {displayExplanation}
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              {displayMode === 'match' ? 'Match analysis · AI-assisted' : 'Acoustic analysis · AI-assisted'}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Error state */}
       {error && !isExplaining && (

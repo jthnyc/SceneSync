@@ -55,6 +55,14 @@ function buildMfccData(
   }));
 }
 
+function buildMfccSrSummary(data: { name: string; match: number; reference: number }[]): string {
+  const biggest = [...data].sort((a, b) =>
+    Math.abs(b.match - b.reference) - Math.abs(a.match - a.reference)
+  )[0];
+  const direction = biggest.match > biggest.reference ? 'higher' : 'lower';
+  return `Timbral profile comparing 12 MFCC coefficients. Largest divergence at coefficient ${biggest.name}, where the match is ${direction} than the reference.`;
+}
+
 interface MfccChartProps {
   data: { name: string; match: number; reference: number }[];
 }
@@ -94,6 +102,13 @@ function normalizeChroma(fv: FeatureVector): number[] {
   const max = Math.max(...raw);
   if (max === 0) return raw;
   return raw.map(v => v / max);
+}
+
+function buildChromaSrSummary(fv: FeatureVector): string {
+  const norm = normalizeChroma(fv);
+  const labeled = CHROMA_LABELS.map((note, i) => ({ note, val: norm[i] }));
+  const top3 = [...labeled].sort((a, b) => b.val - a.val).slice(0, 3);
+  return `Harmonic content across 12 pitch classes. Strongest: ${top3.map(t => `${t.note} (${(t.val * 100).toFixed(0)}%)`).join(', ')}.`;
 }
 
 function buildChromaData(
@@ -161,15 +176,16 @@ interface AcousticSummaryProps {
 }
 
 const AcousticSummary: React.FC<AcousticSummaryProps> = ({ features }) => (
-  <div className="grid grid-cols-5 gap-2">
+  <div className="grid grid-cols-5 gap-2" role="list" aria-label="Acoustic properties summary">
     {ACOUSTIC_DIMENSIONS.map(({ key, label }) => (
-      <div key={key} className="text-center">
+      <div key={key} className="text-center" role="listitem">
         <div
           className="w-3 h-3 rounded-full mx-auto mb-1.5"
           style={{ backgroundColor: ACOUSTIC_COLORS[label] }}
+          aria-hidden="true"
         />
         <p className="text-xs font-medium text-gray-300">{label}</p>
-        <p className="text-xs text-gray-500 mt-0.5">{getAcousticLabel(features, key)}</p>
+        <p className="text-xs text-gray-400 mt-0.5">{getAcousticLabel(features, key)}</p>
       </div>
     ))}
   </div>
@@ -185,7 +201,7 @@ interface AcousticComparisonTableProps {
 const AcousticComparisonTable: React.FC<AcousticComparisonTableProps> = ({ features, referenceFeatures }) => (
   <div className="space-y-2">
     {/* Header row */}
-    <div className="grid grid-cols-3 gap-2 text-xs text-gray-500 px-2 pb-1 border-b border-gray-700/50">
+    <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 px-2 pb-1 border-b border-gray-700/50">
       <span></span>
       <span className="text-center">Your reference</span>
       <span className="text-center">This match</span>
@@ -253,9 +269,12 @@ export const FeatureVisualizations: React.FC<FeatureVisualizationsProps> = ({
           <h4 className="text-sm font-medium text-gray-300 mb-1">
             Timbral Profile
           </h4>
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-xs text-gray-400 mb-3">
             Instrument color and character. Where bars diverge, the tracks sound different in timbre — even if energy and brightness match.
           </p>
+          <div className="sr-only">
+            {buildMfccSrSummary(buildMfccData(features, referenceFeatures!))}
+          </div>
           <MfccChart data={buildMfccData(features, referenceFeatures!)} />
         </div>
       )}
@@ -265,9 +284,13 @@ export const FeatureVisualizations: React.FC<FeatureVisualizationsProps> = ({
         <h4 className="text-sm font-medium text-gray-300 mb-1">
           Harmonic Content
         </h4>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-gray-400 mb-3">
           Which pitch classes are most present. Taller bars = stronger harmonic presence.
         </p>
+        <div className="sr-only">
+          {buildChromaSrSummary(features)}
+          {isComparing && referenceFeatures && ` Reference: ${buildChromaSrSummary(referenceFeatures)}`}
+        </div>
         <ResponsiveContainer width="100%" height={160}>
           <BarChart
             data={buildChromaData(features, isComparing ? referenceFeatures : null)}
@@ -314,7 +337,7 @@ export const FeatureVisualizations: React.FC<FeatureVisualizationsProps> = ({
         <h4 className="text-sm font-medium text-gray-300 mb-1">
           Acoustic Properties
         </h4>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-gray-400 mb-3">
           {isComparing
             ? 'Highlighted rows show where the tracks diverge.'
             : 'The five dimensions that define this track\'s emotional character.'}

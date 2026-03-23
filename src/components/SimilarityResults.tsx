@@ -94,7 +94,7 @@ const SimilarityResults: React.FC<SimilarityResultsProps> = ({
                       </div>
                     )}
                     {!compact && (
-                      <div className="text-xs text-gray-500 mt-1">{source}</div>
+                      <div className="text-xs text-gray-400 mt-1">{source}</div>
                     )}
                     {compact && subtitle && (
                       <div className="text-xs text-gray-400 truncate mt-0.5">
@@ -108,7 +108,7 @@ const SimilarityResults: React.FC<SimilarityResultsProps> = ({
                   <div className={`text-xs font-medium ${rank.text}`}>
                     {rank.label}
                   </div>
-                  <div className="text-xs text-gray-500 mt-0.5">
+                  <div className="text-xs text-gray-400 mt-0.5">
                     {(result.score * 100).toFixed(0)}%
                   </div>
                 </div>
@@ -119,7 +119,7 @@ const SimilarityResults: React.FC<SimilarityResultsProps> = ({
       </div>
 
       {!compact && (
-        <p className="text-xs text-gray-600 mt-3">
+        <p className="text-xs text-gray-400 mt-3">
           Matched by acoustic fingerprint — energy, timbre, brightness, and harmonic content.
         </p>
       )}

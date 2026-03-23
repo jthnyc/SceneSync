@@ -48,32 +48,32 @@ const EmptyState: React.FC<EmptyStateProps> = ({ className = '' }) => {
         aria-label="Feature overview"
       >
         <div className="flex items-start gap-3 text-sm" role="listitem">
-          <div className="mt-0.5 text-gray-500 flex-shrink-0" aria-hidden="true">
+          <div className="mt-0.5 text-gray-400 flex-shrink-0" aria-hidden="true">
             <Upload size={16} />
           </div>
           <div>
             <span className="text-gray-300 font-medium">Drag & Drop</span>
-            <span className="text-gray-500"> or click to upload MP3, WAV, M4A</span>
+            <span className="text-gray-400"> or click to upload MP3, WAV, M4A</span>
           </div>
         </div>
 
         <div className="flex items-start gap-3 text-sm" role="listitem">
-          <div className="mt-0.5 text-gray-500 flex-shrink-0" aria-hidden="true">
+          <div className="mt-0.5 text-gray-400 flex-shrink-0" aria-hidden="true">
             <Waves size={16} />
           </div>
           <div>
             <span className="text-gray-300 font-medium">Acoustic fingerprinting</span>
-            <span className="text-gray-500"> across 7 characteristics</span>
+            <span className="text-gray-400"> across 7 characteristics</span>
           </div>
         </div>
 
         <div className="flex items-start gap-3 text-sm" role="listitem">
-          <div className="mt-0.5 text-gray-500 flex-shrink-0" aria-hidden="true">
+          <div className="mt-0.5 text-gray-400 flex-shrink-0" aria-hidden="true">
             <Sparkles size={16} />
           </div>
           <div>
             <span className="text-gray-300 font-medium">Royalty-free matches</span>
-            <span className="text-gray-500"> with AI explanation of why each match fits</span>
+            <span className="text-gray-400"> with AI explanation of why each match fits</span>
           </div>
         </div>
       </div>

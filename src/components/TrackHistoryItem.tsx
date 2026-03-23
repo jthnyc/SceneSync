@@ -57,7 +57,7 @@ export function TrackHistoryItem({
           ${isSelected ? 'text-gray-400' : ''}
         `}
         aria-label={`Remove ${track.fileName} from history`}
-        tabIndex={-1}
+        tabIndex={0}
       >
         <Trash2 className="w-4 h-4" />
       </button>
@@ -78,7 +78,7 @@ export function TrackHistoryItem({
         </div>
 
         {/* Timestamp */}
-        <div className={`text-xs ${isSelected ? 'text-gray-600' : 'text-gray-500'}`}>
+        <div className={`text-xs ${isSelected ? 'text-gray-600' : 'text-gray-400'}`}>
           {new Date(track.analyzedAt).toLocaleString()}
         </div>
 

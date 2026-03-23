@@ -84,7 +84,7 @@ const UploadZone: React.FC<UploadZoneProps> = ({
           : 'Drop audio file here or click to browse'
         }
       </p>
-      <p className="text-xs sm:text-sm text-gray-500">
+      <p className="text-xs sm:text-sm text-gray-400">
         Supports: MP3, WAV, M4A, etc.
       </p>
     </div>

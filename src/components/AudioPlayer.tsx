@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, X } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward } from 'lucide-react';
 import { formatFileSize, formatDuration } from '../utils/formatUtils';
 import type { TrackDisplay } from '../utils/parseTrackDisplay';
 import toast from 'react-hot-toast';
@@ -171,17 +171,17 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           </div>
 
           {displaySubtitle && (
-            <div className="text-xs text-gray-500 mt-1 truncate">{displaySubtitle}</div>
+            <div className="text-xs text-gray-400 mt-1 truncate">{displaySubtitle}</div>
           )}
         </div>
 
         {onClear && (
           <button
             onClick={onClear}
-            className="p-1.5 hover:bg-gray-600/50 rounded-lg transition-colors flex-shrink-0 mt-0.5"
-            aria-label="Remove current file"
+            className="text-xs text-gray-400 hover:text-gray-200 hover:bg-gray-600/50 px-2 py-1 rounded transition-colors flex-shrink-0 mt-0.5"
+            aria-label="Clear analysis and start over"
           >
-            <X size={16} className="text-gray-400 hover:text-gray-200" />
+            Clear Analysis
           </button>
         )}
       </div>
