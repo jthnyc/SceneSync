@@ -234,7 +234,7 @@ class SimilarityService {
       features: track.features,
     }));
 
-    return results.sort((a, b) => b.score - a.score).slice(0, topN);
+    return results.sort((a, b) => b.score - a.score).filter(r => r.score < 0.98).slice(0, topN);
   }
 
   isLibraryLoaded(): boolean { return this.isLoaded; }
