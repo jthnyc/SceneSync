@@ -234,6 +234,8 @@ class SimilarityService {
       features: track.features,
     }));
 
+    // Exclude near-identical matches (>= 0.98) — effectively the same recording.
+    // See: fix/self-match-filter for rationale.
     return results.sort((a, b) => b.score - a.score).filter(r => r.score < 0.98).slice(0, topN);
   }
 
