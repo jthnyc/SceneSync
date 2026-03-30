@@ -96,7 +96,7 @@ export const useFileHandler = ({
   }, [handleFile]);
 
   const clearFile = useCallback(() => {
-    pendingFile.current = null;
+  pendingFile.current = null;
     setSelectedFile(null);
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
@@ -104,6 +104,7 @@ export const useFileHandler = ({
 
   return {
     selectedFile,
+    handleFile,
     handleFileChange,
     handleFileDrop,
     clearFile,

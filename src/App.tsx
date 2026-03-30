@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { useSimilaritySearch } from './hooks/useSimilaritySearch';
 import { useTrackHistory } from './hooks/useTrackHistory';
 import { useExplanationCache } from './hooks/useExplanationCache';
@@ -11,6 +11,7 @@ import { audioStorage } from './services/audioStorageService';
 import { PrivacyNotice } from './components/PrivacyNotice';
 import { Header, Sidebar, MainContent } from './components';
 import { parseTrackDisplay } from './utils/parseTrackDisplay';
+import type { EntryPoint } from './config/entryPoints';
 
 import './index.css';
 
@@ -33,6 +34,7 @@ function App() {
   } | null>(null);
   const [selectedMatchFile, setSelectedMatchFile] = useState<string | undefined>(undefined);
   const [historyFetchFailed, setHistoryFetchFailed] = useState(false);
+  const [loadingEntryPoint, setLoadingEntryPoint] = useState<string | null>(null);
 
   const {
     isSearching,
@@ -83,7 +85,7 @@ function App() {
     setSelectedTrackId(trackId);
   }, []);
 
-  const { selectedFile, handleFileChange, handleFileDrop, clearFile } = useFileHandler({
+  const { selectedFile, handleFile, handleFileChange, handleFileDrop, clearFile } = useFileHandler({
     referenceFeatureVector,
     referenceDuration,
     findSimilar,
@@ -92,6 +94,23 @@ function App() {
     onFileReady: handleFileReady,
     onTrackAdded: handleTrackAdded,
   });
+
+  const handleEntryPointSelect = useCallback(async (entryPoint: EntryPoint) => {
+    setLoadingEntryPoint(entryPoint.zone);
+    try {
+      const response = await fetch(`/api/fetch-audio?path=${encodeURIComponent(entryPoint.r2Path)}`);
+      if (!response.ok) throw new Error(`Failed to fetch entry point: ${response.status}`);
+      const blob = await response.blob();
+      const file = new File([blob], entryPoint.fileName, { type: 'audio/mpeg' });
+      handleFile(file);
+    } catch (err) {
+      console.error('Entry point fetch failed:', err);
+      console.error('URL attempted:', `${process.env.REACT_APP_R2_PUBLIC_URL}/${entryPoint.r2Path}`);
+      toast.error('Could not load sample track. Please try uploading your own file.');
+    } finally {
+      setLoadingEntryPoint(null);
+    }
+  }, [handleFile]);
 
   const handleShowReference = (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => {
     setActiveTrack({
@@ -189,6 +208,7 @@ function App() {
     setHistoryFetchFailed(false);
     clearResults();
     clearExplanations();
+    clearFile();
   };
 
   return (
@@ -240,6 +260,8 @@ function App() {
             onExplainReference={explainReference}
             onExplainMatch={explainMatchTrack}
             onRestoreReference={restoreReferenceExplanation}
+            onSelectEntryPoint={handleEntryPointSelect}
+            loadingEntryPoint={loadingEntryPoint}
           />
 
           <Sidebar
