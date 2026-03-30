@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { formatFileSize, formatDuration } from '../utils/formatUtils';
 import {
+  EntryPoints,
   UploadZone,
   FeatureVisualizations,
   AudioPlayer,
@@ -11,6 +12,7 @@ import type { AnalyzedTrack } from '../types/audio';
 import type { SimilarityResult } from '../services/similarityService';
 import type { TrackDisplay } from '../utils/parseTrackDisplay';
 import type { FeatureVector } from '../workers/featureExtraction.types';
+import type { EntryPoint } from '../config/entryPoints';
 
 interface MainContentProps {
   playerRef?: React.RefObject<HTMLDivElement | null >;
@@ -42,6 +44,8 @@ interface MainContentProps {
   onExplainReference: (fv: FeatureVector) => Promise<void>;
   onExplainMatch: (refFv: FeatureVector, matchFv: FeatureVector) => Promise<void>;
   onRestoreReference: () => void;
+  onSelectEntryPoint: (entryPoint: EntryPoint) => void;
+  loadingEntryPoint: string | null;
 }
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -69,6 +73,8 @@ const MainContent: React.FC<MainContentProps> = ({
   onExplainReference,
   onExplainMatch,
   onRestoreReference,
+  onSelectEntryPoint,
+  loadingEntryPoint,
 }) => {
   const [referenceTrack, setReferenceTrack] = useState<{
     file: File;
@@ -127,10 +133,28 @@ const MainContent: React.FC<MainContentProps> = ({
       </div>
       <h2 className="text-xl font-semibold mb-4 text-primary-400">Upload Audio</h2>
 
+      {!selectedFile && (
+        <EntryPoints
+          onSelect={onSelectEntryPoint}
+          loadingZone={loadingEntryPoint}
+        />
+      )}
+      
       <UploadZone
         onFileChange={onFileChange}
         onFileDrop={onFileDrop}
+        // reduce min height slightly to accommodate entry point cards above
+        // pass a prop or override via className — see note below
       />
+      
+      {/* // NOTE on UploadZone height:
+      // UploadZone hardcodes min-h-[180px] sm:min-h-[200px] internally.
+      // Easiest approach: add an optional className prop to UploadZone and
+      // pass "min-h-[140px] sm:min-h-[160px]" when entry points are visible.
+      // Alternatively just leave the height unchanged — the cards are compact
+      // enough that the combined height is acceptable without adjustment.
+      // Recommend leaving height unchanged for now and revisiting if it feels
+      // cramped on a real screen. */}
 
       {/* Main Audio Player */}
       {activeTrack && (

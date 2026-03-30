@@ -6,6 +6,7 @@ export { default as UploadZone } from './UploadZone';
 export { default as TrackHistory } from './TrackHistory';
 export { TrackHistoryItem } from './TrackHistoryItem';
 export { default as EmptyState } from './EmptyState';
+export { default as EntryPoints } from './EntryPoints';
 export { default as ProgressIndicator } from './ProgressIndicator';
 export { FeatureVisualizations } from './FeatureVisualizations';
 export { Skeleton, SkeletonText, SkeletonCard } from './Skeleton';
