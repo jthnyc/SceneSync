@@ -69,6 +69,10 @@ const PATHS = {
     outputPath:   './scripts/musopen_feature_vectors.json',
     tracklistPath: './scripts/musopen_tracklist.md',
   },
+  youtube: {
+    audioDir:     './data/youtube',
+    outputPath:   './scripts/youtube_feature_vectors.json',
+  },
 };
 
 // ── Percentile helpers ────────────────────────────────────────────────────────
@@ -465,23 +469,65 @@ function runMusopen(config) {
     .forEach(([c, n]) => console.log(`  ${c}: ${n}`));
 }
 
+// ── YouTube mode ──────────────────────────────────────────────────────────────
+function runYouTube(config) {
+  const { audioDir, outputPath } = config;
+  let results        = [];
+  const processedFiles = new Set();
+
+  // Resumable
+  if (fs.existsSync(outputPath)) {
+    results = JSON.parse(fs.readFileSync(outputPath, 'utf8'));
+    results.forEach(r => processedFiles.add(r.file));
+    console.log(`Resuming — ${results.length} tracks already processed.\n`);
+  }
+
+  const allFiles  = walkAudioFiles(audioDir);
+  const remaining = allFiles.filter(f => !processedFiles.has(f));
+  console.log(`Found ${allFiles.length} total files. ${remaining.length} left to process.\n`);
+
+  for (let i = 0; i < remaining.length; i++) {
+    const filePath = remaining[i];
+    console.log(`[${i + 1}/${remaining.length}] Processing: ${filePath}`);
+
+    const features = extractFeatures(filePath);
+    if (features) {
+      results.push({
+        file: filePath,
+        genre: 'YouTube',
+        features,
+      });
+    }
+
+    if ((i + 1) % SAVE_EVERY === 0) {
+      saveProgress(results, outputPath);
+      console.log(`  ✓ Progress saved (${results.length} tracks so far)`);
+    }
+  }
+
+  saveProgress(results, outputPath);
+  console.log(`\nDone. Extracted features from ${results.length} tracks.`);
+  console.log(`Saved to ${outputPath}`);
+}
+
 // ── Entry point ───────────────────────────────────────────────────────────────
 
 const mode = process.argv[2];
-
-if (mode !== 'fma' && mode !== 'musopen') {
-  console.error('\nUsage: node scripts/extract_features.js [fma|musopen]\n');
+if (!['fma', 'musopen', 'youtube'].includes(mode)) {
+  console.error('\nUsage: node scripts/extract_features.js [fma|musopen|youtube]\n');
   console.error('  fma     — walks ./data/fma_small, writes scripts/feature_vectors.json');
-  console.error('  musopen — reads scripts/musopen_tracklist.md, writes scripts/musopen_feature_vectors.json\n');
+  console.error('  musopen — reads scripts/musopen_tracklist.md, writes scripts/musopen_feature_vectors.json');
+  console.error('  youtube — walks ./data/youtube, writes scripts/youtube_feature_vectors.json\n');
   process.exit(1);
 }
 
 console.log(`\n── SceneSync feature extractor (${mode.toUpperCase()}) ──────────────────────────\n`);
-
 checkDependencies();
 
 if (mode === 'fma') {
   runFMA(PATHS.fma);
-} else {
+} else if (mode === 'musopen') {
   runMusopen(PATHS.musopen);
+} else {
+  runYouTube(PATHS.youtube);
 }

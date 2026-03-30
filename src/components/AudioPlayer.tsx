@@ -59,6 +59,11 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
     const audio = audioRef.current;
     if (!audio) return;
 
+    // Reset play state when track changes — the new source hasn't
+    // started playing yet, so the button should show "play."
+    setIsPlaying(false);
+    setCurrentTime(0);
+
     const handleLoadedMetadata = () => setDuration(audio.duration);
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handleEnded = () => {
@@ -137,7 +142,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
         <div className="flex-1 min-w-0">
           {activeType === 'reference' && (
             <div className="text-xs text-primary-400 font-medium mb-1 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-primary-400 rounded-full"></span>
               REFERENCE TRACK
             </div>
           )}
