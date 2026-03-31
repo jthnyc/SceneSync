@@ -14,6 +14,7 @@ interface AudioPlayerProps {
   className?: string;
   hasReference?: boolean;
   onShowReference?: () => void;
+  isPreview?: boolean;
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({
@@ -26,6 +27,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
   className = '',
   hasReference,
   onShowReference,
+  isPreview,
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -166,7 +168,10 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           )}
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="text-white font-medium truncate">{displayTitle}</div>
+            <div className="text-white font-medium truncate">
+              {displayTitle}
+              {isPreview && <span className="text-gray-500 font-normal">· Preview</span>}
+            </div>
             {fileSize && (
               <div className="flex items-center gap-3 text-sm flex-shrink-0">
                 <span className="text-gray-400">{formatFileSize(fileSize)}</span>
