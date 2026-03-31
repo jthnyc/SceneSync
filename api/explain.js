@@ -57,6 +57,10 @@ module.exports = async function handler(req, res) {
 
   const ACTIVE_PROVIDER = process.env.LLM_PROVIDER || 'deepseek';
   const MAX_TOKENS = 200;
+  // 0.7 balances variation (breaks template habit) with coherence.
+  // Lower values (0.4) caused repetitive opening phrasing across tracks
+  // with similar acoustic profiles. See explanationService.ts for context.
+  const TEMPERATURE = 0.7;
 
   const config = PROVIDER_CONFIGS[ACTIVE_PROVIDER];
   const apiKey = process.env[config.apiKeyEnvVar];
@@ -73,8 +77,8 @@ module.exports = async function handler(req, res) {
   try {
     const content =
       ACTIVE_PROVIDER === 'anthropic'
-        ? await callAnthropic(prompt, apiKey, config, MAX_TOKENS)
-        : await callOpenAICompatible(prompt, apiKey, config, MAX_TOKENS, ACTIVE_PROVIDER);
+        ? await callAnthropic(prompt, apiKey, config, MAX_TOKENS, TEMPERATURE)
+        : await callOpenAICompatible(prompt, apiKey, config, MAX_TOKENS, ACTIVE_PROVIDER, TEMPERATURE);
 
     return res.status(200).json({ content });
   } catch (error) {
@@ -83,7 +87,7 @@ module.exports = async function handler(req, res) {
   }
 };
 
-async function callOpenAICompatible(prompt, apiKey, config, maxTokens, provider) {
+async function callOpenAICompatible(prompt, apiKey, config, maxTokens, provider, temperature) {
   const response = await fetch(config.endpoint, {
     method: 'POST',
     headers: {
@@ -94,7 +98,7 @@ async function callOpenAICompatible(prompt, apiKey, config, maxTokens, provider)
       model: config.model,
       max_tokens: maxTokens,
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.4,
+      temperature,
     }),
   });
 
@@ -107,7 +111,7 @@ async function callOpenAICompatible(prompt, apiKey, config, maxTokens, provider)
   return data.choices?.[0]?.message?.content?.trim() ?? '';
 }
 
-async function callAnthropic(prompt, apiKey, config, maxTokens) {
+async function callAnthropic(prompt, apiKey, config, maxTokens, temperature) {
   const response = await fetch(config.endpoint, {
     method: 'POST',
     headers: {
@@ -118,6 +122,7 @@ async function callAnthropic(prompt, apiKey, config, maxTokens) {
     body: JSON.stringify({
       model: config.model,
       max_tokens: maxTokens,
+      temperature,
       messages: [{ role: 'user', content: prompt }],
     }),
   });

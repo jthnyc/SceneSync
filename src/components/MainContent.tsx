@@ -166,6 +166,7 @@ const MainContent: React.FC<MainContentProps> = ({
             onClear={handleClear}
             hasReference={activeTrack.type === 'match' && referenceTrack !== null}
             onShowReference={handleShowReference}
+            isPreview={activeTrack.type === 'match'}
           />
         </div>
       )}

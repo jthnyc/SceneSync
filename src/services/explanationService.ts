@@ -20,6 +20,7 @@ export const explanationService = {
    */
   explain: async (featureVector: FeatureVector): Promise<string> => {
     const prompt = buildReferencePrompt(featureVector);
+    console.log(prompt);
     return callProvider(prompt);
   },
 
@@ -42,13 +43,20 @@ function buildReferencePrompt(fv: FeatureVector): string {
   const features = describeVector(fv);
 
   return `You are a music supervisor giving a quick verbal take to a film editor in a cutting room.
-Speak directly, like a person — not a product description. Open with what the track *feels* like or *does*, not what it "is".
+Speak directly, like a person — not a product description.
 
 Acoustic properties of the track:
 ${features}
 
 In 2–3 sentences: describe the feeling this track creates and what kind of scene it would serve.
-No jargon. No bullet points. Lead with whatever is most striking about this track — the feeling, the texture, the scene it conjures. Don't open with "This track" or "The track".`;
+No jargon. No bullet points.
+
+Choose ONE of these entry points based on what is most distinctive about this track:
+- Lead with the energy arc (how it moves — builds, holds, fades)
+- Lead with the specific scene or moment it fits
+- Lead with the most striking acoustic quality (harmonic character, texture, brightness)
+
+Don't open with "This track" or "The track". Don't open with sensation or texture words like "deep", "warm", "rich", "lush", or "heavy".`;
 }
 
 function buildComparisonPrompt(ref: FeatureVector, match: FeatureVector): string {
@@ -65,7 +73,15 @@ ${sharedTraits}
 Where this suggestion differs from the reference:
 ${divergentTraits}
 
-In 2–3 sentences: tell the editor why this suggestion will serve the same scene need. Lead with whatever is most useful — the strongest shared quality, the key difference, or the specific scene moment it fits. Don't open with "This track" or "The track".`;
+In 2–3 sentences: tell the editor why this suggestion will serve the same scene need.
+No jargon. No bullet points.
+
+Choose ONE of these entry points based on what is most useful:
+- Lead with the strongest shared quality (what makes this a valid substitute)
+- Lead with the key difference (the most important thing the editor should know)
+- Lead with whether this fits the same scene moment or a close adjacent one
+
+Don't open with "This track" or "The track". Don't open with sensation or texture words like "deep", "warm", "rich", "lush", or "heavy".`;
 }
 
 // ── Directional comparison helpers ───────────────────────────────────────
@@ -93,7 +109,7 @@ function compareBrightness(ref: number, match: number): TraitComparison | null {
   if (normalized < 0.08) return null;
   const direction = match > ref ? 'brighter' : 'darker';
   return {
-    label: `Brightness: ${degreeWord(normalized)} ${direction} than your reference`,
+    label: `Brightness: ${degreeWord(normalized)} ${direction} than your reference (ref: ${ref.toFixed(1)} bins, match: ${match.toFixed(1)} bins)`,
     magnitude: normalized,
   };
 }
@@ -105,7 +121,7 @@ function compareEnergy(ref: number, match: number): TraitComparison | null {
   if (normalized < 0.1) return null;
   const direction = match > ref ? 'more energetic' : 'quieter';
   return {
-    label: `Energy level: ${degreeWord(normalized)} ${direction} than your reference`,
+    label: `Energy level: ${degreeWord(normalized)} ${direction} than your reference (ref: ${ref.toFixed(3)}, match: ${match.toFixed(3)})`,
     magnitude: normalized,
   };
 }
@@ -117,7 +133,7 @@ function compareWidth(ref: number, match: number): TraitComparison | null {
   if (normalized < 0.08) return null;
   const direction = match > ref ? 'wider / fuller in spectrum' : 'narrower / more focused';
   return {
-    label: `Frequency width: ${degreeWord(normalized)} ${direction} than your reference`,
+    label: `Frequency width: ${degreeWord(normalized)} ${direction} than your reference (ref: ${ref.toFixed(1)} bins, match: ${match.toFixed(1)} bins)`,
     magnitude: normalized,
   };
 }
@@ -128,7 +144,7 @@ function compareTexture(ref: number, match: number): TraitComparison | null {
   if (normalized < 0.1) return null;
   const direction = match > ref ? 'noisier / more textural' : 'more tonal / cleaner';
   return {
-    label: `Texture: ${degreeWord(normalized)} ${direction} than your reference`,
+    label: `Texture: ${degreeWord(normalized)} ${direction} than your reference (ref: ${ref.toFixed(3)}, match: ${match.toFixed(3)})`,
     magnitude: normalized,
   };
 }
@@ -140,7 +156,7 @@ function compareWarmth(ref: number, match: number): TraitComparison | null {
   if (normalized < 0.1) return null;
   const direction = match > ref ? 'warmer / fuller bodied' : 'leaner / brighter in character';
   return {
-    label: `Timbre: ${degreeWord(normalized)} ${direction} than your reference`,
+    label: `Timbre: ${degreeWord(normalized)} ${direction} than your reference (ref: ${ref.toFixed(1)}, match: ${match.toFixed(1)})`,
     magnitude: normalized,
   };
 }
@@ -161,17 +177,17 @@ function findSharedTraits(ref: FeatureVector, match: FeatureVector): string {
   // returns null (values are actually close, not just in the same broad bucket)
   if (compareBrightness(ref.centroid[1], match.centroid[1]) === null) {
     const label = classifyBrightness(ref.centroid[1]);
-    traits.push(`Brightness: both ${label}`);
+    traits.push(`Brightness: both ${label} (centroid: ${ref.centroid[1].toFixed(1)} bins)`);
   }
 
   if (compareTexture(ref.flatness[1], match.flatness[1]) === null) {
     const label = classifyTexture(ref.flatness[1]);
-    traits.push(`Texture: both ${label}`);
+    traits.push(`Texture: both ${label} (flatness: ${ref.flatness[1].toFixed(3)})`);
   }
 
   if (compareWarmth(ref.mfcc_1[1], match.mfcc_1[1]) === null) {
     const label = classifyWarmth(ref.mfcc_1[1]);
-    traits.push(`Timbral character: both ${label}`);
+    traits.push(`Timbral character: both ${label} (MFCC 1: ${ref.mfcc_1[1].toFixed(1)})`);
   }
 
   const refNote = getDominantNote(ref);
@@ -286,18 +302,18 @@ function describeVector(fv: FeatureVector): string {
 function describeArc(p25: number, p50: number, p75: number): string {
   const arc = classifyArc(p25, p75);
   const level = classifyLevel(p50);
-  if (arc === 'building / escalating') return `Energy arc: builds — starts quiet, escalates to ${level}`;
-  if (arc === 'fading / winding down') return `Energy arc: starts ${level} and fades out`;
-  return `Energy arc: steady ${level} throughout — no major swells or drops`;
+  if (arc === 'building / escalating') return `Energy arc: builds — starts quiet, escalates to ${level} (p25: ${p25.toFixed(3)}, p50: ${p50.toFixed(3)}, p75: ${p75.toFixed(3)})`;
+  if (arc === 'fading / winding down') return `Energy arc: starts ${level} and fades out (p25: ${p25.toFixed(3)}, p50: ${p50.toFixed(3)}, p75: ${p75.toFixed(3)})`;
+  return `Energy arc: steady ${level} throughout — no major swells or drops (p25: ${p25.toFixed(3)}, p50: ${p50.toFixed(3)}, p75: ${p75.toFixed(3)})`;
 }
 
 function describeBrightness(centroidP50: number): string {
   const label = classifyBrightness(centroidP50);
   const descriptions: Record<string, string> = {
-    'bright / airy':    'Brightness: high — treble-forward, airy, thin',
-    'mid-balanced':     'Brightness: mid — balanced, present without harshness',
-    'warm / mid-heavy': 'Brightness: warm — mid-heavy, body without brightness',
-    'dark / bass-heavy':'Brightness: dark — bass-heavy, low and dense',
+    'bright / airy':    `Brightness: high — treble-forward, airy, thin (centroid: ${centroidP50.toFixed(1)} bins)`,
+    'mid-balanced':     `Brightness: mid — balanced, present without harshness (centroid: ${centroidP50.toFixed(1)} bins)`,
+    'warm / mid-heavy': `Brightness: warm — mid-heavy, body without brightness (centroid: ${centroidP50.toFixed(1)} bins)`,
+    'dark / bass-heavy':`Brightness: dark — bass-heavy, low and dense (centroid: ${centroidP50.toFixed(1)} bins)`,
   };
   return descriptions[label] ?? '';
 }
@@ -305,9 +321,9 @@ function describeBrightness(centroidP50: number): string {
 function describeTexture(flatnessP50: number): string {
   const label = classifyTexture(flatnessP50);
   const descriptions: Record<string, string> = {
-    'noisy / washy':        'Texture: noisy / washy — more sound design than melody',
-    'mixed tonal/textural': 'Texture: mixed — blend of tonal and textural elements',
-    'tonal / clean':        'Texture: tonal — clean melodic or harmonic content, not much noise',
+    'noisy / washy':        `Texture: noisy / washy — more sound design than melody (flatness: ${flatnessP50.toFixed(3)})`,
+    'mixed tonal/textural': `Texture: mixed — blend of tonal and textural elements (flatness: ${flatnessP50.toFixed(3)})`,
+    'tonal / clean':        `Texture: tonal — clean melodic or harmonic content, not much noise (flatness: ${flatnessP50.toFixed(3)})`,
   };
   return descriptions[label] ?? '';
 }
@@ -315,9 +331,9 @@ function describeTexture(flatnessP50: number): string {
 function describeWidth(spreadP50: number): string {
   const label = classifyWidth(spreadP50);
   const descriptions: Record<string, string> = {
-    'wide / full spectrum': 'Frequency width: wide — full and lush, uses the whole spectrum',
-    'medium width':         'Frequency width: medium — balanced presence across registers',
-    'narrow / focused':     'Frequency width: narrow — focused, sparse, not a lot of frequency filling',
+    'wide / full spectrum': `Frequency width: wide — full and lush, uses the whole spectrum (spread: ${spreadP50.toFixed(1)} bins)`,
+    'medium width':         `Frequency width: medium — balanced presence across registers (spread: ${spreadP50.toFixed(1)} bins)`,
+    'narrow / focused':     `Frequency width: narrow — focused, sparse, not a lot of frequency filling (spread: ${spreadP50.toFixed(1)} bins)`,
   };
   return descriptions[label] ?? '';
 }
@@ -334,16 +350,16 @@ function describeHarmonic(fv: FeatureVector): string {
   const top = values.slice(0, 3).map(v => v.note).join(', ');
   const spread = values[0].val - values[11].val;
   if (spread < 0.05) return 'Harmonic content: tonally ambiguous — no clear pitch center';
-  if (spread < 0.12) return `Harmonic content: mild — gentle harmonic presence around ${top}`;
-  return `Harmonic content: strong — concentrated around ${top}`;
+  if (spread < 0.12) return `Harmonic content: mild — gentle harmonic presence around ${top} (chroma spread: ${spread.toFixed(3)})`;
+  return `Harmonic content: strong — concentrated around ${top} (chroma spread: ${spread.toFixed(3)})`;
 }
 
 function describeTimbral(mfcc1P50: number): string {
   const label = classifyWarmth(mfcc1P50);
   const descriptions: Record<string, string> = {
-    'warm and full-bodied': 'Timbre: warm and full-bodied — low-frequency energy dominates',
-    'balanced':             'Timbre: balanced — neither particularly warm nor bright in character',
-    'lean and bright':      'Timbre: lean and bright — upper partials prominent, not a heavy sound',
+    'warm and full-bodied': `Timbre: warm and full-bodied — low-frequency energy dominates (MFCC 1: ${mfcc1P50.toFixed(1)})`,
+    'balanced':             `Timbre: balanced — neither particularly warm nor bright in character (MFCC 1: ${mfcc1P50.toFixed(1)})`,
+    'lean and bright':      `Timbre: lean and bright — upper partials prominent, not a heavy sound (MFCC 1: ${mfcc1P50.toFixed(1)})`,
   };
   return descriptions[label] ?? '';
 }
