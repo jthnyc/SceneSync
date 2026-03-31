@@ -168,9 +168,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
           )}
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="text-white font-medium truncate">
-              {displayTitle}
-              {isPreview && <span className="text-gray-500 font-normal">· Preview</span>}
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-white font-medium truncate">{displayTitle}</span>
+              {isPreview && <span className="text-gray-500 font-normal text-xs flex-shrink-0">· Preview</span>}
             </div>
             {fileSize && (
               <div className="flex items-center gap-3 text-sm flex-shrink-0">
