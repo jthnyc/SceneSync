@@ -31,6 +31,7 @@ function App() {
     file: File | string;
     features?: FeatureVector;
     metadata: TrackDisplay;
+    isLibraryTrack?: boolean;
   } | null>(null);
   const [selectedMatchFile, setSelectedMatchFile] = useState<string | undefined>(undefined);
   const [historyFetchFailed, setHistoryFetchFailed] = useState(false);
@@ -76,9 +77,9 @@ function App() {
     storageAvailable,
   });
 
-  const handleFileReady = useCallback((track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => {
+  const handleFileReady = useCallback((track: { file: File; features?: FeatureVector; metadata: TrackDisplay; isLibraryTrack?: boolean }) => {
     setSelectedTrackId(null);
-    setActiveTrack({ type: 'reference', file: track.file, metadata: track.metadata });
+    setActiveTrack({ type: 'reference', file: track.file, metadata: track.metadata, isLibraryTrack: track.isLibraryTrack ?? false });
   }, []);
 
   const handleTrackAdded = useCallback((trackId: string) => {
@@ -102,7 +103,7 @@ function App() {
       if (!response.ok) throw new Error(`Failed to fetch entry point: ${response.status}`);
       const blob = await response.blob();
       const file = new File([blob], entryPoint.fileName, { type: 'audio/mpeg' });
-      handleFile(file);
+      handleFile(file, { isLibraryTrack: true });
     } catch (err) {
       console.error('Entry point fetch failed:', err);
       console.error('URL attempted:', `${process.env.REACT_APP_R2_PUBLIC_URL}/${entryPoint.r2Path}`);
@@ -150,7 +151,7 @@ function App() {
           subtitle: 'From history',
           source: 'Stored file',
         };
-        setActiveTrack({ type: 'reference', file, metadata });
+        setActiveTrack({ type: 'reference', file, metadata, isLibraryTrack: false });
         // Shift focus to the player so keyboard users land on the loaded track
         requestAnimationFrame(() => playerRef.current?.focus());
         if (track.featureVector) {
@@ -182,6 +183,7 @@ function App() {
       file: r2Url,
       features: result.features ?? undefined,
       metadata: parseTrackDisplay(result.file),
+      isLibraryTrack: true,
     });
 
     setSelectedMatchFile(result.file);

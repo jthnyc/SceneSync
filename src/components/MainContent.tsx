@@ -29,6 +29,7 @@ interface MainContentProps {
     file: File | string;
     features?: FeatureVector;
     metadata: TrackDisplay;
+    isLibraryTrack?: boolean;
   } | null;
   referenceFeatures: FeatureVector | null;
   onSelectMatch: (result: SimilarityResult) => void;
@@ -166,7 +167,7 @@ const MainContent: React.FC<MainContentProps> = ({
             onClear={handleClear}
             hasReference={activeTrack.type === 'match' && referenceTrack !== null}
             onShowReference={handleShowReference}
-            isPreview={activeTrack.type === 'match'}
+            isPreview={activeTrack.type === 'match' || activeTrack.isLibraryTrack === true}
           />
         </div>
       )}
