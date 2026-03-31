@@ -17,8 +17,8 @@ interface UseFileHandlerParams {
   findSimilar: (file: File) => void;
   addTrack: (file: File, featureVector: FeatureVector, duration: number | null) => Promise<string | null>;
   explainReference: (featureVector: FeatureVector, trackId: string) => Promise<void>;
-  onFileReady: (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => void;
   onTrackAdded: (trackId: string) => void;
+  onFileReady: (track: { file: File; features?: FeatureVector; metadata: TrackDisplay; isLibraryTrack?: boolean }) => void;
 }
 
 export const useFileHandler = ({
@@ -61,7 +61,7 @@ export const useFileHandler = ({
   }, [referenceFeatureVector]);
 
   // ── Shared file intake logic ───────────────────────────────────────────
-  const handleFile = useCallback((file: File) => {
+  const handleFile = useCallback((file: File, options?: { isLibraryTrack?: boolean }) => {
     const validation = validateAudioFile(file);
     if (!validation.isValid) {
       toast.error(validation.error || 'Invalid file', { duration: 5000 });
@@ -76,7 +76,7 @@ export const useFileHandler = ({
 
     pendingFile.current = file; // arm the effect before findSimilar fires
     setSelectedFile(file);
-    onFileReady({ file, metadata });
+    onFileReady({ file, metadata, isLibraryTrack: options?.isLibraryTrack ?? false });
     findSimilar(file);
     return true;
   }, [findSimilar, onFileReady]);
