@@ -86,51 +86,6 @@ function App() {
     setSelectedTrackId(trackId);
   }, []);
 
-  const { selectedFile, handleFile, handleFileChange, handleFileDrop, clearFile } = useFileHandler({
-    referenceFeatureVector,
-    referenceDuration,
-    findSimilar,
-    addTrack,
-    explainReference,
-    onFileReady: handleFileReady,
-    onTrackAdded: handleTrackAdded,
-  });
-
-  const handleEntryPointSelect = useCallback(async (entryPoint: EntryPoint) => {
-    setLoadingEntryPoint(entryPoint.zone);
-    try {
-      const response = await fetch(`/api/fetch-audio?path=${encodeURIComponent(entryPoint.r2Path)}`);
-      if (!response.ok) throw new Error(`Failed to fetch entry point: ${response.status}`);
-      const blob = await response.blob();
-      const file = new File([blob], entryPoint.fileName, { type: 'audio/mpeg' });
-      handleFile(file, { isLibraryTrack: true });
-    } catch (err) {
-      console.error('Entry point fetch failed:', err);
-      console.error('URL attempted:', `${process.env.REACT_APP_R2_PUBLIC_URL}/${entryPoint.r2Path}`);
-      toast.error('Could not load sample track. Please try uploading your own file.');
-    } finally {
-      setLoadingEntryPoint(null);
-    }
-  }, [handleFile]);
-
-  const handleShowReference = (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => {
-    setActiveTrack({
-      type: 'reference',
-      file: track.file,
-      features: track.features,
-      metadata: track.metadata,
-    });
-  };
-
-  const handleClearFile = () => {
-    clearFile();
-    setSelectedTrackId(null);
-    setActiveTrack(null);
-    clearResults();
-    clearExplanations();
-    setHistoryFetchFailed(false);
-  };
-
   const handleSelectTrack = async (id: string) => {
     clearResults();
     setSelectedTrackId(id);
@@ -166,6 +121,53 @@ function App() {
       console.error('Failed to load history track:', err);
       setHistoryFetchFailed(true);
     }
+  };
+
+  const { selectedFile, handleFile, handleFileChange, handleFileDrop, clearFile } = useFileHandler({
+    referenceFeatureVector,
+    referenceDuration,
+    findSimilar,
+    addTrack,
+    explainReference,
+    onFileReady: handleFileReady,
+    onTrackAdded: handleTrackAdded,
+    trackHistory,
+    onDuplicateFile: handleSelectTrack,
+  });
+
+  const handleEntryPointSelect = useCallback(async (entryPoint: EntryPoint) => {
+    setLoadingEntryPoint(entryPoint.zone);
+    try {
+      const response = await fetch(`/api/fetch-audio?path=${encodeURIComponent(entryPoint.r2Path)}`);
+      if (!response.ok) throw new Error(`Failed to fetch entry point: ${response.status}`);
+      const blob = await response.blob();
+      const file = new File([blob], entryPoint.fileName, { type: 'audio/mpeg' });
+      handleFile(file, { isLibraryTrack: true });
+    } catch (err) {
+      console.error('Entry point fetch failed:', err);
+      console.error('URL attempted:', `${process.env.REACT_APP_R2_PUBLIC_URL}/${entryPoint.r2Path}`);
+      toast.error('Could not load sample track. Please try uploading your own file.');
+    } finally {
+      setLoadingEntryPoint(null);
+    }
+  }, [handleFile]);
+
+  const handleShowReference = (track: { file: File; features?: FeatureVector; metadata: TrackDisplay }) => {
+    setActiveTrack({
+      type: 'reference',
+      file: track.file,
+      features: track.features,
+      metadata: track.metadata,
+    });
+  };
+
+  const handleClearFile = () => {
+    clearFile();
+    setSelectedTrackId(null);
+    setActiveTrack(null);
+    clearResults();
+    clearExplanations();
+    setHistoryFetchFailed(false);
   };
 
   const handleSelectMatch = (result: SimilarityResult) => {

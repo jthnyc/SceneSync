@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import { validateAudioFile } from '../utils/fileValidation';
 import type { TrackDisplay } from '../utils/parseTrackDisplay';
 import type { FeatureVector } from '../workers/featureExtraction.types';
+import type { AnalyzedTrack } from '../types/audio';
 
 interface UseFileHandlerParams {
   referenceFeatureVector: FeatureVector | null;
@@ -19,6 +20,8 @@ interface UseFileHandlerParams {
   explainReference: (featureVector: FeatureVector, trackId: string) => Promise<void>;
   onTrackAdded: (trackId: string) => void;
   onFileReady: (track: { file: File; features?: FeatureVector; metadata: TrackDisplay; isLibraryTrack?: boolean }) => void;
+  trackHistory: AnalyzedTrack[];
+  onDuplicateFile: (id: string) => void;
 }
 
 export const useFileHandler = ({
@@ -29,6 +32,8 @@ export const useFileHandler = ({
   explainReference,
   onFileReady,
   onTrackAdded,
+  trackHistory,
+  onDuplicateFile,
 }: UseFileHandlerParams) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -68,6 +73,18 @@ export const useFileHandler = ({
       return false;
     }
 
+    // Check for duplicate before arming the extraction pipeline
+    const existing = trackHistory.find(t => t.fileName === file.name);
+    if (existing) {
+      toast('Loading from your history', {
+        icon: '↩︎',
+        duration: 2000,
+        style: { background: '#1f2937', color: '#9ca3af' },
+      });
+      onDuplicateFile(existing.id);
+      return false;
+    }
+
     const metadata: TrackDisplay = {
       title: file.name,
       subtitle: 'Your reference',
@@ -79,7 +96,7 @@ export const useFileHandler = ({
     onFileReady({ file, metadata, isLibraryTrack: options?.isLibraryTrack ?? false });
     findSimilar(file);
     return true;
-  }, [findSimilar, onFileReady]);
+  }, [findSimilar, onFileReady, onDuplicateFile, trackHistory]);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
