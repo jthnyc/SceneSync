@@ -7,15 +7,13 @@
 // Match explanations persist per reference track — keyed by match file path.
 // Both are synced to in-memory trackHistory via updateTrack.
 
-import { useState, useCallback } from 'react';
-import type { RefObject } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTrackExplanation } from './useTrackExplanation';
 import type { FeatureVector } from '../workers/featureExtraction.types';
 import type { AnalyzedTrack } from '../types/audio';
 
 interface UseExplanationCacheParams {
   selectedTrackId: string | null;
-  selectedTrackIdRef: RefObject<string | null>;
   activeMatchFile: string | null;
   getTrack: (id: string) => AnalyzedTrack | undefined;
   updateTrack: (id: string, partial: Partial<AnalyzedTrack>) => Promise<void>;
@@ -24,7 +22,6 @@ interface UseExplanationCacheParams {
 
 export const useExplanationCache = ({
   selectedTrackId,
-  selectedTrackIdRef,
   activeMatchFile,
   getTrack,
   updateTrack,
@@ -35,10 +32,20 @@ export const useExplanationCache = ({
   const [referenceExplanation, setReferenceExplanation] = useState<string | null>(null);
   const [matchExplanation, setMatchExplanation] = useState<string | null>(null);
 
+  // Ref kept in sync with selectedTrackId so post-await staleness checks
+  // read the current value rather than the closure value at call time.
+  const selectedTrackIdRef = useRef<string | null>(selectedTrackId);
+  useEffect(() => {
+    selectedTrackIdRef.current = selectedTrackId;
+  }, [selectedTrackId]);
+
   const explainReference = useCallback(async (
     featureVector: FeatureVector,
+    // trackId override: addTrack resolves with the new ID before React
+    // batches the selectedTrackId state update. Without this, the effect
+    // would read stale (null) selectedTrackId on first upload.
     trackId?: string
-  ): Promise<void> => {
+    ): Promise<void> => {
     const id = trackId ?? selectedTrackId;
     if (!id) return;
 
@@ -58,7 +65,7 @@ export const useExplanationCache = ({
     if (storageAvailable) {
       updateTrack(id, { referenceExplanation: result });
     }
-  }, [selectedTrackId, selectedTrackIdRef, getTrack, explain, updateTrack, storageAvailable]);
+  }, [selectedTrackId, getTrack, explain, updateTrack, storageAvailable]);
 
   const explainMatchTrack = useCallback(async (
     referenceVector: FeatureVector,
@@ -66,6 +73,7 @@ export const useExplanationCache = ({
   ): Promise<void> => {
     if (!selectedTrackId || !activeMatchFile) return;
 
+    // Check in-memory cache first
     const track = getTrack(selectedTrackId);
     const cached = track?.matchExplanations?.[activeMatchFile];
     if (cached) {
@@ -80,6 +88,9 @@ export const useExplanationCache = ({
 
     if (storageAvailable) {
       const existingMatchExplanations = track?.matchExplanations ?? {};
+      // Known issue #12: read-modify-write on matchExplanations is not atomic.
+      // Two rapid clicks could cause one write to overwrite the other.
+      // Low probability in practice — see ARCHITECTURE.md known issues.
       updateTrack(selectedTrackId, {
         matchExplanations: {
           ...existingMatchExplanations,
