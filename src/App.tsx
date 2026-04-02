@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { useSimilaritySearch } from './hooks/useSimilaritySearch';
 import { useTrackHistory } from './hooks/useTrackHistory';
@@ -36,6 +36,12 @@ function App() {
   const [selectedMatchFile, setSelectedMatchFile] = useState<string | undefined>(undefined);
   const [historyFetchFailed, setHistoryFetchFailed] = useState(false);
   const [loadingEntryPoint, setLoadingEntryPoint] = useState<string | null>(null);
+  const selectedTrackIdRef = useRef<string | null>(null);
+
+  // keep ref in sync
+  useEffect(() => {
+    selectedTrackIdRef.current = selectedTrackId;
+  }, [selectedTrackId]);
 
   const {
     isSearching,
@@ -75,6 +81,7 @@ function App() {
     getTrack,
     updateTrack,
     storageAvailable,
+    selectedTrackIdRef,
   });
 
   const handleFileReady = useCallback((track: { file: File; features?: FeatureVector; metadata: TrackDisplay; isLibraryTrack?: boolean }) => {
@@ -87,6 +94,7 @@ function App() {
   }, []);
 
   const handleSelectTrack = async (id: string) => {
+    handleClearFile(); // cancel any in-flight extraction before switching tracks
     clearResults();
     setSelectedTrackId(id);
     setActiveTrack(null);
@@ -111,8 +119,10 @@ function App() {
         requestAnimationFrame(() => playerRef.current?.focus());
         if (track.featureVector) {
           findSimilarFromVector(track.featureVector);
+          explainReference(track.featureVector, id);
         } else {
           findSimilar(file);
+          // no feature vector yet — explanation will fire via the post-extraction effect
         }
       } else {
         setHistoryFetchFailed(true);
