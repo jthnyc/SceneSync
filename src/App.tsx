@@ -87,6 +87,7 @@ function App() {
   }, []);
 
   const handleSelectTrack = async (id: string) => {
+    handleClearFile(); // cancel any in-flight extraction before switching tracks
     clearResults();
     setSelectedTrackId(id);
     setActiveTrack(null);
@@ -111,8 +112,10 @@ function App() {
         requestAnimationFrame(() => playerRef.current?.focus());
         if (track.featureVector) {
           findSimilarFromVector(track.featureVector);
+          explainReference(track.featureVector, id);
         } else {
           findSimilar(file);
+          // no feature vector yet — explanation will fire via the post-extraction effect
         }
       } else {
         setHistoryFetchFailed(true);

@@ -7,7 +7,7 @@
 // Match explanations persist per reference track — keyed by match file path.
 // Both are synced to in-memory trackHistory via updateTrack.
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTrackExplanation } from './useTrackExplanation';
 import type { FeatureVector } from '../workers/featureExtraction.types';
 import type { AnalyzedTrack } from '../types/audio';
@@ -32,6 +32,13 @@ export const useExplanationCache = ({
   const [referenceExplanation, setReferenceExplanation] = useState<string | null>(null);
   const [matchExplanation, setMatchExplanation] = useState<string | null>(null);
 
+  // Ref kept in sync with selectedTrackId so post-await staleness checks
+  // read the current value rather than the closure value at call time.
+  const selectedTrackIdRef = useRef<string | null>(selectedTrackId);
+  useEffect(() => {
+    selectedTrackIdRef.current = selectedTrackId;
+  }, [selectedTrackId]);
+
   const explainReference = useCallback(async (
     featureVector: FeatureVector,
     // trackId override: addTrack resolves with the new ID before React
@@ -44,18 +51,21 @@ export const useExplanationCache = ({
 
     const track = getTrack(id);
     if (track?.referenceExplanation) {
-        setReferenceExplanation(track.referenceExplanation);
-        return;
+      setReferenceExplanation(track.referenceExplanation);
+      return;
     }
 
     const result = await explain(featureVector);
     if (!result) return;
 
+    // Guard: discard result if user navigated away during the async call
+    if (selectedTrackIdRef.current !== id) return;
+
     setReferenceExplanation(result);
     if (storageAvailable) {
-        updateTrack(id, { referenceExplanation: result });
+      updateTrack(id, { referenceExplanation: result });
     }
-    }, [selectedTrackId, getTrack, explain, updateTrack, storageAvailable]);
+  }, [selectedTrackId, getTrack, explain, updateTrack, storageAvailable]);
 
   const explainMatchTrack = useCallback(async (
     referenceVector: FeatureVector,
