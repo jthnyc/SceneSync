@@ -43,11 +43,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   useEffect(() => {
     if (audioFile instanceof File) {
-      // Check if the file type is supported
-      const supportedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/aac'];
-      if (!supportedTypes.includes(audioFile.type)) {
-        console.warn('Unsupported file type:', audioFile.type);
-      }
       const url = URL.createObjectURL(audioFile);
       setAudioUrl(url);
       return () => URL.revokeObjectURL(url);
