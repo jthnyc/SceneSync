@@ -96,15 +96,6 @@ export const validateAudioFile = (file: File): FileValidationResult => {
 };
 
 /**
- * Format file size for display
- */
-export const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-};
-
-/**
  * Get user-friendly error message for specific error types
  */
 export const getErrorMessage = (error: Error | string): string => {
