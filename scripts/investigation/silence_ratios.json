@@ -1,0 +1,2172 @@
+[
+  {
+    "file": "youtube/batch2/Viral Dirge - Ryan Stasik.mp3",
+    "source": "YouTube",
+    "totalFrames": 11431,
+    "nanFrames": 257,
+    "silenceRatio": 0.022482722421485433
+  },
+  {
+    "file": "youtube/batch1/GTA Type Beat - Dyalla.mp3",
+    "source": "YouTube",
+    "totalFrames": 13323,
+    "nanFrames": 253,
+    "silenceRatio": 0.01898971703069879
+  },
+  {
+    "file": "youtube/batch1/Nebula - The Grey Room _ Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 16316,
+    "nanFrames": 298,
+    "silenceRatio": 0.01826428046089728
+  },
+  {
+    "file": "youtube/batch2/Can't Be Beat - The Soundings.mp3",
+    "source": "YouTube",
+    "totalFrames": 8862,
+    "nanFrames": 134,
+    "silenceRatio": 0.015120740239223652
+  },
+  {
+    "file": "youtube/batch3/No.8 Requiem - Esther Abrami.mp3",
+    "source": "YouTube",
+    "totalFrames": 12689,
+    "nanFrames": 170,
+    "silenceRatio": 0.013397430845614311
+  },
+  {
+    "file": "youtube/batch2/Viral Dance - Ryan Stasik.mp3",
+    "source": "YouTube",
+    "totalFrames": 11848,
+    "nanFrames": 137,
+    "silenceRatio": 0.011563133018230925
+  },
+  {
+    "file": "youtube/batch2/Beast Mode - The Soundings.mp3",
+    "source": "YouTube",
+    "totalFrames": 8610,
+    "nanFrames": 95,
+    "silenceRatio": 0.011033681765389082
+  },
+  {
+    "file": "youtube/batch2/The Challenger - The Soundings.mp3",
+    "source": "YouTube",
+    "totalFrames": 8222,
+    "nanFrames": 79,
+    "silenceRatio": 0.009608367793724155
+  },
+  {
+    "file": "youtube/batch1/In Battery - Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 15845,
+    "nanFrames": 109,
+    "silenceRatio": 0.0068791416850741555
+  },
+  {
+    "file": "youtube/batch1/Curse Of Old - Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 14511,
+    "nanFrames": 90,
+    "silenceRatio": 0.0062021914409758115
+  },
+  {
+    "file": "youtube/batch2/A Baroque Letter - Aaron Kenny.mp3",
+    "source": "YouTube",
+    "totalFrames": 9344,
+    "nanFrames": 56,
+    "silenceRatio": 0.0059931506849315065
+  },
+  {
+    "file": "youtube/batch3/Ready for More - Ezra Lipp.mp3",
+    "source": "YouTube",
+    "totalFrames": 9223,
+    "nanFrames": 53,
+    "silenceRatio": 0.005746503306950017
+  },
+  {
+    "file": "youtube/batch3/Twin Lynches - Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 21874,
+    "nanFrames": 110,
+    "silenceRatio": 0.005028801316631617
+  },
+  {
+    "file": "youtube/batch3/Dead Forest - Brian Bolger.mp3",
+    "source": "YouTube",
+    "totalFrames": 10862,
+    "nanFrames": 48,
+    "silenceRatio": 0.004419075676670963
+  },
+  {
+    "file": "youtube/batch3/Creep - Emmit Fenn.mp3",
+    "source": "YouTube",
+    "totalFrames": 9086,
+    "nanFrames": 39,
+    "silenceRatio": 0.004292317851639886
+  },
+  {
+    "file": "youtube/batch2/Night Falls - Everet Almond.mp3",
+    "source": "YouTube",
+    "totalFrames": 15005,
+    "nanFrames": 63,
+    "silenceRatio": 0.004198600466511163
+  },
+  {
+    "file": "youtube/batch1/With You - Everet Almond.mp3",
+    "source": "YouTube",
+    "totalFrames": 13932,
+    "nanFrames": 57,
+    "silenceRatio": 0.00409130060292851
+  },
+  {
+    "file": "youtube/batch1/Valiant - Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 16844,
+    "nanFrames": 66,
+    "silenceRatio": 0.003918309190216101
+  },
+  {
+    "file": "youtube/batch2/Valiant - Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 16844,
+    "nanFrames": 66,
+    "silenceRatio": 0.003918309190216101
+  },
+  {
+    "file": "youtube/batch3/No Se - Casa Rosa.mp3",
+    "source": "YouTube",
+    "totalFrames": 9320,
+    "nanFrames": 34,
+    "silenceRatio": 0.003648068669527897
+  },
+  {
+    "file": "youtube/batch2/Waltz AF - Everet Almond.mp3",
+    "source": "YouTube",
+    "totalFrames": 14689,
+    "nanFrames": 45,
+    "silenceRatio": 0.0030635169174211994
+  },
+  {
+    "file": "youtube/batch2/Man Versus Tank - The Soundings.mp3",
+    "source": "YouTube",
+    "totalFrames": 10359,
+    "nanFrames": 22,
+    "silenceRatio": 0.0021237571194130706
+  },
+  {
+    "file": "youtube/batch3/House on the Hill - Everet Almond.mp3",
+    "source": "YouTube",
+    "totalFrames": 18014,
+    "nanFrames": 35,
+    "silenceRatio": 0.0019429332741201287
+  },
+  {
+    "file": "youtube/batch1/A Single Step - Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 14926,
+    "nanFrames": 28,
+    "silenceRatio": 0.001875921211309125
+  },
+  {
+    "file": "youtube/batch3/Minor Lament for Solo Bass - John Patitucci.mp3",
+    "source": "YouTube",
+    "totalFrames": 18860,
+    "nanFrames": 35,
+    "silenceRatio": 0.001855779427359491
+  },
+  {
+    "file": "youtube/batch2/White Lights - Blue Deer.mp3",
+    "source": "YouTube",
+    "totalFrames": 17632,
+    "nanFrames": 32,
+    "silenceRatio": 0.0018148820326678765
+  },
+  {
+    "file": "youtube/batch2/Rotator - The Grey Room _ Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 17223,
+    "nanFrames": 27,
+    "silenceRatio": 0.001567671137432503
+  },
+  {
+    "file": "youtube/batch3/Deep Space Sector 9 - Ezra Lipp.mp3",
+    "source": "YouTube",
+    "totalFrames": 8989,
+    "nanFrames": 14,
+    "silenceRatio": 0.0015574591166981867
+  },
+  {
+    "file": "youtube/batch2/The Reins - Blue Deer.mp3",
+    "source": "YouTube",
+    "totalFrames": 17014,
+    "nanFrames": 25,
+    "silenceRatio": 0.0014693781591630423
+  },
+  {
+    "file": "youtube/batch2/Sweethearts - TrackTribe.mp3",
+    "source": "YouTube",
+    "totalFrames": 19320,
+    "nanFrames": 18,
+    "silenceRatio": 0.0009316770186335404
+  },
+  {
+    "file": "youtube/batch2/Taking Chances - The Soundings.mp3",
+    "source": "YouTube",
+    "totalFrames": 12515,
+    "nanFrames": 7,
+    "silenceRatio": 0.0005593288054334798
+  },
+  {
+    "file": "fma_small/141/141300.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/131/131327.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/131/131922.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/116/116101.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/124/124874.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/133/133576.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/114/114236.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/139/139537.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/126/126411.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/125/125809.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/081/081988.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/118/118062.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/114/114231.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/131/131917.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/126/126289.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/114/114536.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/126/126408.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/075/075429.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/124/124175.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/120/120303.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/128/128473.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/115/115288.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/126/126720.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/117/117161.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/141/141137.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/117/117611.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/020/020366.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/130/130993.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/127/127520.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/108/108881.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/080/080389.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/119/119831.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/117/117172.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/040/040655.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/152/152570.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/131/131914.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/133/133443.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/052/052446.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/136/136276.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/092/092947.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/108/108472.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/133/133434.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/120/120328.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/143/143295.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/124/124183.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/133/133973.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/133/133457.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/082/082157.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/143/143296.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/114/114076.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/108/108478.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/075/075441.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/120/120298.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/122/122650.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/131/131795.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/115/115290.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/120/120302.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/014/014580.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/080/080402.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/011/011638.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/132/132774.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/087/087377.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/056/056805.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/042/042375.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/052/052648.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/047/047657.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/097/097544.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/073/073369.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/140/140261.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/045/045099.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/067/067553.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/114/114384.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/127/127263.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/047/047658.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/047/047073.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/052/052644.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/111/111819.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/145/145917.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/029/029530.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/107/107126.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/027/027177.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/121/121450.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/069/069205.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/026/026629.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/091/091755.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/092/092549.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/107/107804.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/072/072071.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/125/125159.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/068/068894.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/109/109925.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/134/134054.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/064/064536.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/087/087645.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/065/065064.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/084/084097.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/021/021895.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/090/090074.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/087/087644.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/067/067308.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/014/014809.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/060/060170.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/052/052945.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/083/083439.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/081/081946.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/003/003920.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/106/106343.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/061/061012.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/096/096695.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/127/127266.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/139/139522.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/073/073584.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/105/105715.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/109/109448.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/093/093075.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/109/109449.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/088/088871.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/108/108306.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/040/040239.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/105/105917.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/084/084158.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/012/012481.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/023/023014.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/145/145555.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/126/126749.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/086/086623.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/003/003707.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/043/043965.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/125/125186.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/043/043796.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/127/127867.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/004/004511.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/018/018044.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/129/129922.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/135/135220.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/055/055238.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/114/114943.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/141/141590.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/055/055231.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/004/004096.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/110/110447.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/134/134941.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/038/038830.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/038/038828.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/062/062529.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/098/098031.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/076/076069.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/115/115263.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/136/136994.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/127/127360.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/004/004075.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/113/113266.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/134/134942.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/114/114884.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/052/052001.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/010/010675.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/113/113305.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/040/040139.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/047/047526.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/075/075782.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/032/032021.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/125/125777.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/079/079575.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/094/094419.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/155/155066.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/114/114266.mp3",
+    "source": "FMA",
+    "totalFrames": 2580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/123/123972.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/136/136449.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/061/061884.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/138/138212.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/019/019439.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/134/134509.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/062/062742.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/043/043773.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/087/087325.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/052/052039.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/127/127273.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/029/029045.mp3",
+    "source": "FMA",
+    "totalFrames": 2578,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/126/126403.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "fma_small/012/012376.mp3",
+    "source": "FMA",
+    "totalFrames": 2581,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Ancient Civilisations - Alex Jones _ Xander Jones.mp3",
+    "source": "YouTube",
+    "totalFrames": 17433,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Circa 1983 - Freedom Trail Studio.mp3",
+    "source": "YouTube",
+    "totalFrames": 15627,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Defying Gravity - Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 18413,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Demented 90s Cartoon Theme - Rod Kim.mp3",
+    "source": "YouTube",
+    "totalFrames": 7795,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Distrust The System - The Soundlings.mp3",
+    "source": "YouTube",
+    "totalFrames": 11880,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Duty Calls - Rod Kim.mp3",
+    "source": "YouTube",
+    "totalFrames": 8856,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Final Boss Battle - Rod Kim.mp3",
+    "source": "YouTube",
+    "totalFrames": 8656,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Fireflies - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 8430,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Ghibli Station - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 9876,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Neon nights - Patrick Patrikios.mp3",
+    "source": "YouTube",
+    "totalFrames": 13973,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Nightmares Inn - RKVC.mp3",
+    "source": "YouTube",
+    "totalFrames": 18197,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Powdered Waltz - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 11580,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/The Great Pig In The Sty - Ezra Lipp.mp3",
+    "source": "YouTube",
+    "totalFrames": 10806,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/The Theme - Alex Jones _ Xander Jones.mp3",
+    "source": "YouTube",
+    "totalFrames": 15262,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch1/Whirlpool - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 8181,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/A Distant Call - Dan _Lebo_ Lebowitz, Tone Seeker.mp3",
+    "source": "YouTube",
+    "totalFrames": 14951,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Across Seas And Lands - Asher Fulero.mp3",
+    "source": "YouTube",
+    "totalFrames": 17883,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/After Sunset - Alex Jones _ Xander Jones.mp3",
+    "source": "YouTube",
+    "totalFrames": 13778,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Battle Of The Beast - The Soundings.mp3",
+    "source": "YouTube",
+    "totalFrames": 11022,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Before the Loss - Nathan Moore.mp3",
+    "source": "YouTube",
+    "totalFrames": 11630,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Between The Spaces - The Soundlings.mp3",
+    "source": "YouTube",
+    "totalFrames": 16378,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Black Thorns - Jimena Contreras.mp3",
+    "source": "YouTube",
+    "totalFrames": 8438,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Blue Ribbons - TrackTribe.mp3",
+    "source": "YouTube",
+    "totalFrames": 19017,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Blue Screen Of Death - The Soundlings.mp3",
+    "source": "YouTube",
+    "totalFrames": 10579,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Cafe Regrette - Asher Fulero.mp3",
+    "source": "YouTube",
+    "totalFrames": 10203,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Ceremonial Library - Asher Fulero.mp3",
+    "source": "YouTube",
+    "totalFrames": 10763,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Challenge Accepted - The Soundings.mp3",
+    "source": "YouTube",
+    "totalFrames": 13322,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/City of the Wolf - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 16079,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Crystaline - Quincas Moreira.mp3",
+    "source": "YouTube",
+    "totalFrames": 12459,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Defying Gravity - Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 18413,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Dhun (Sarangi, Tabla) - Sandeep Das,  Aneesh Mishra.mp3",
+    "source": "YouTube",
+    "totalFrames": 13213,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Distrust The System - The Soundlings.mp3",
+    "source": "YouTube",
+    "totalFrames": 11880,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Dragón Rojo - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 9899,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/End Of Valor - Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 15866,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Final Soliloquy - Asher Fulero.mp3",
+    "source": "YouTube",
+    "totalFrames": 15812,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Fire In The Sky - Alex Jones _ Xander Jones.mp3",
+    "source": "YouTube",
+    "totalFrames": 23299,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Fireflies - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 8430,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Forest Lullabye - Asher Fulero.mp3",
+    "source": "YouTube",
+    "totalFrames": 14553,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Frodo's Quest - Ezra Lipp.mp3",
+    "source": "YouTube",
+    "totalFrames": 9812,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/From Whence We Came - Dan _Lebo_ Lebowitz, Tone Seeker.mp3",
+    "source": "YouTube",
+    "totalFrames": 13676,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Glass Chinchilla - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 8614,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/High Noon - The Grey Room _ Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 16812,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Hopeful - Nat Keefe.mp3",
+    "source": "YouTube",
+    "totalFrames": 15541,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Impossible Sacrifice - Asher Fulero.mp3",
+    "source": "YouTube",
+    "totalFrames": 15439,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/In Memory of Jean Talon - Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 7938,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Intergalactic - Alex Jones _ Xander Jones.mp3",
+    "source": "YouTube",
+    "totalFrames": 13530,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Josef Suk, Serenade, Op 6 - A Far Cry.mp3",
+    "source": "YouTube",
+    "totalFrames": 135640,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Keys To Unravel - The Soundlings.mp3",
+    "source": "YouTube",
+    "totalFrames": 13573,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Level - The Grey Room _ Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 13950,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Majestic-12 - Alex Jones _ Xander Jones.mp3",
+    "source": "YouTube",
+    "totalFrames": 16947,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Monthaholic - Schwartzy.mp3",
+    "source": "YouTube",
+    "totalFrames": 14717,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Moving In The Shadows - The Soundlings.mp3",
+    "source": "YouTube",
+    "totalFrames": 12874,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Night Hunt - Jimena Contreras.mp3",
+    "source": "YouTube",
+    "totalFrames": 7792,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Nocturne - Asher Fulero.mp3",
+    "source": "YouTube",
+    "totalFrames": 16194,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Palindrome - Alex Hamlin.mp3",
+    "source": "YouTube",
+    "totalFrames": 18830,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Panoramic Arrival - Asher Fulero.mp3",
+    "source": "YouTube",
+    "totalFrames": 13860,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Portcullis - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 7787,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Raag Ahir Bhairav - Aalap (Sarangi) - Sandeep Das,  Aneesh Mishra.mp3",
+    "source": "YouTube",
+    "totalFrames": 13844,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Raag Charukeshi - Aalap (Sitar) - Sandeep Das,  Amrendra Mishra.mp3",
+    "source": "YouTube",
+    "totalFrames": 14030,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Raag Charukeshi - Drut Teentaal (Sitar, Tabla) - Sandeep Das,  Amrendra Mishra.mp3",
+    "source": "YouTube",
+    "totalFrames": 13485,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Raag Charukeshi - Madhyalaya Teentaal (Sitar, Tabla) - Sandeep Das,  Amrendra Mishra.mp3",
+    "source": "YouTube",
+    "totalFrames": 13729,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Raag Pahadi - Sandeep Das, Mayank Raina, Bivakar Chaudhuri.mp3",
+    "source": "YouTube",
+    "totalFrames": 15156,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Rain Over Kyoto Station - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 14165,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Sagas - The Grey Room _ Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 16362,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Scale The Mountain - Density & Time.mp3",
+    "source": "YouTube",
+    "totalFrames": 15331,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Shadowstep - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 12199,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Silica - Alex Hamlin.mp3",
+    "source": "YouTube",
+    "totalFrames": 14243,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Snowfall Butterflies - Asher Fulero.mp3",
+    "source": "YouTube",
+    "totalFrames": 13519,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Stake Out - Alex Jones _ Xander Jones.mp3",
+    "source": "YouTube",
+    "totalFrames": 15827,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Swans In Flight - Asher Fulero.mp3",
+    "source": "YouTube",
+    "totalFrames": 11495,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/System Corruption - The Soundlings.mp3",
+    "source": "YouTube",
+    "totalFrames": 12835,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/The Girl from Saint-Anne-des-Plaines - The Mini Vandals.mp3",
+    "source": "YouTube",
+    "totalFrames": 8251,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/The Great Pig In The Sty - Ezra Lipp.mp3",
+    "source": "YouTube",
+    "totalFrames": 10806,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/The Light - Alex Jones _ Xander Jones.mp3",
+    "source": "YouTube",
+    "totalFrames": 18343,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/The Marble Cinematic University - Ezra Lipp.mp3",
+    "source": "YouTube",
+    "totalFrames": 10505,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/The Theme - Alex Jones _ Xander Jones.mp3",
+    "source": "YouTube",
+    "totalFrames": 15262,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/There's Something More - The Soundlings.mp3",
+    "source": "YouTube",
+    "totalFrames": 11501,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch2/Welcome Home - Nathan Moore.mp3",
+    "source": "YouTube",
+    "totalFrames": 15006,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/A Hand In The Dark - Underbelly & Ty Mayer.mp3",
+    "source": "YouTube",
+    "totalFrames": 14246,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Apocalyptic Echoes - Jimena Contreras.mp3",
+    "source": "YouTube",
+    "totalFrames": 14122,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Argonne - Zachariah Hickman.mp3",
+    "source": "YouTube",
+    "totalFrames": 8776,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Aztec Empire - Jimena Contreras.mp3",
+    "source": "YouTube",
+    "totalFrames": 14726,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Cosmic Nightmares - Jimena Contreras.mp3",
+    "source": "YouTube",
+    "totalFrames": 16608,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Devil's Organ - Jimena Contreras.mp3",
+    "source": "YouTube",
+    "totalFrames": 16017,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Dune dancer - Patrick Patrikios.mp3",
+    "source": "YouTube",
+    "totalFrames": 13708,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Frightmare - Jimena Contreras.mp3",
+    "source": "YouTube",
+    "totalFrames": 14053,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Funeral in Sinaloa - Jimena Contreras.mp3",
+    "source": "YouTube",
+    "totalFrames": 15400,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Future - Anno Domini Beats.mp3",
+    "source": "YouTube",
+    "totalFrames": 11833,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Incoming Transition - The Whole Other.mp3",
+    "source": "YouTube",
+    "totalFrames": 9643,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Mayan Ritual - Jimena Contreras.mp3",
+    "source": "YouTube",
+    "totalFrames": 14122,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Quick Trip Into The Stratosphere - I Think I Can Help You.mp3",
+    "source": "YouTube",
+    "totalFrames": 9643,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Sands of serenity. - Patrick Patrikios.mp3",
+    "source": "YouTube",
+    "totalFrames": 14314,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Sands of time - Patrick Patrikios.mp3",
+    "source": "YouTube",
+    "totalFrames": 13324,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Searching In The Mountains - Au.Ra.mp3",
+    "source": "YouTube",
+    "totalFrames": 15479,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/The Journey Ahead - Ezra Lipp.mp3",
+    "source": "YouTube",
+    "totalFrames": 10624,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Those Things Are More Fun With Other People - pATCHES.mp3",
+    "source": "YouTube",
+    "totalFrames": 19076,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/To Pass Time - Godmode.mp3",
+    "source": "YouTube",
+    "totalFrames": 9285,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Traverse The Sky - Asher Fulero.mp3",
+    "source": "YouTube",
+    "totalFrames": 16630,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  },
+  {
+    "file": "youtube/batch3/Way back when - Patrick Patrikios.mp3",
+    "source": "YouTube",
+    "totalFrames": 13783,
+    "nanFrames": 0,
+    "silenceRatio": 0
+  }
+]
