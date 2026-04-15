@@ -67,7 +67,7 @@ const PATHS = {
   musopen: {
     audioDir:     null,
     outputPath:   './scripts/musopen_feature_vectors.json',
-    tracklistPath: './scripts/musopen_tracklist.md',
+    tracklistPath: './scripts/pipeline/musopen_tracklist.md',
   },
   youtube: {
     audioDir:     './data/youtube',
@@ -89,10 +89,13 @@ function percentile(sortedArr, p) {
   return sortedArr[lower] + (idx - lower) * (sortedArr[upper] - sortedArr[lower]);
 }
 
-/** Returns [p25, p50, p75] snapshot — same shape as Python percentile_snapshot(). */
+/** Returns [p25, p50, p75] snapshot — same shape as Python percentile_snapshot().
+ *  Non-finite values (NaN, Infinity) are filtered before sorting. */
 function percentileSnapshot(frames) {
   if (!frames || frames.length === 0) return [0, 0, 0];
-  const sorted = [...frames].sort((a, b) => a - b);
+  const valid = frames.filter(v => Number.isFinite(v));
+  if (valid.length === 0) return [0, 0, 0];
+  const sorted = [...valid].sort((a, b) => a - b);
   return PERCENTILES.map(p => percentile(sorted, p));
 }
 
@@ -205,11 +208,11 @@ function extractFeatures(filePath) {
     if (!feats) continue;
 
     // Scalar features
-    if (feats.rms               != null) acc.rms.push(feats.rms);
-    if (feats.zcr               != null) acc.zcr.push(feats.zcr);
-    if (feats.spectralCentroid  != null) acc.spectralCentroid.push(feats.spectralCentroid);
-    if (feats.spectralSpread != null) acc.spectralSpread.push(feats.spectralSpread);
-    if (feats.spectralFlatness  != null) acc.spectralFlatness.push(feats.spectralFlatness);
+    if (Number.isFinite(feats.rms))              acc.rms.push(feats.rms);
+    if (Number.isFinite(feats.zcr))              acc.zcr.push(feats.zcr);
+    if (Number.isFinite(feats.spectralCentroid)) acc.spectralCentroid.push(feats.spectralCentroid);
+    if (Number.isFinite(feats.spectralSpread))   acc.spectralSpread.push(feats.spectralSpread);
+    if (Number.isFinite(feats.spectralFlatness)) acc.spectralFlatness.push(feats.spectralFlatness); 
 
     // Vector features — push per-coefficient
     if (Array.isArray(feats.mfcc)) {

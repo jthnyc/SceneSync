@@ -67,7 +67,7 @@ def iqr(values: list[float]) -> float:
 
 
 def safe_median(values: list[float | None]) -> float | None:
-    """p50 value, handling nulls (e.g. Schubert D.784)."""
+    """p50 value, skipping nulls."""
     val = values[1]
     return val if val is not None else None
 
@@ -275,6 +275,42 @@ def print_results(results: list[dict], total: int):
 
 
 # ---------------------------------------------------------------------------
+# Percentile ordering validation
+# ---------------------------------------------------------------------------
+
+TRIPLE_FEATURES = (
+    ["centroid", "spread", "flatness", "rms", "zcr"]
+    + [f"mfcc_{i}" for i in range(1, 14)]
+    + [f"chroma_{i}" for i in range(1, 13)]
+)
+
+
+def check_percentile_ordering(tracks: list[dict]) -> list[dict]:
+    """
+    Flags any track where a feature triple violates p25 <= p50 <= p75.
+    Returns a list of violation dicts — empty means the library is clean.
+    """
+    violations = []
+    for track in tracks:
+        f = track["features"]
+        bad_features = []
+        for key in TRIPLE_FEATURES:
+            triple = f.get(key)
+            if not triple or None in triple:
+                continue
+            p25, p50, p75 = triple
+            if not (p25 <= p50 <= p75):
+                bad_features.append((key, triple))
+        if bad_features:
+            violations.append({
+                "label": track_label(track),
+                "file": track.get("file", ""),
+                "violations": bad_features,
+            })
+    return violations
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -292,6 +328,22 @@ def main():
     print(f"Loaded {len(tracks)} tracks from {LIBRARY_PATH}")
 
     results = score_tracks(tracks)
+    # Percentile ordering validation — catches NaN corruption or broken extraction
+    ordering_violations = check_percentile_ordering(tracks)
+    if ordering_violations:
+        print(f"\n{'!'*72}")
+        print(f"  ORDERING VIOLATIONS — {len(ordering_violations)} track(s) have impossible percentile values")
+        print(f"  These tracks have p25 > p50 or p50 > p75 for at least one feature.")
+        print(f"  Do NOT deploy this library — re-extract affected tracks.")
+        print(f"{'!'*72}\n")
+        for v in ordering_violations:
+            print(f"  {v['label']}")
+            print(f"  {v['file']}")
+            for feat, triple in v['violations']:
+                print(f"    {feat}: {triple}")
+            print()
+    else:
+        print(f"\n  ✅  Percentile ordering: all {len(tracks)} tracks clean.\n")
     print_results(results, len(tracks))
 
 
