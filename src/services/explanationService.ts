@@ -43,12 +43,14 @@ function buildReferencePrompt(fv: FeatureVector): string {
   const features = describeVector(fv);
 
   return `You are a music supervisor giving a quick verbal take to a film editor in a cutting room.
-Speak directly, like a person — not a product description.
+Speak directly and specifically — not a product description, not a first-person narrator. No "I would", "I'd", "Honestly," or similar.
+Explain the acoustic reasons behind your observations — connect what you hear to what the numbers show.
 
 Acoustic properties of the track:
 ${features}
 
-In 2–3 sentences: describe the feeling this track creates and what kind of scene it would serve.
+In 4–5 sentences: describe the feeling this track creates, what kind of scene it would serve, and why — connecting the acoustic properties to the emotional effect.
+Use causal language — explain why qualities produce the feelings they do.
 No jargon. No bullet points.
 
 Choose ONE of these entry points based on what is most distinctive about this track:
@@ -62,10 +64,12 @@ Don't open with "This track" or "The track". Don't open with sensation or textur
 function buildComparisonPrompt(ref: FeatureVector, match: FeatureVector): string {
   const sharedTraits = findSharedTraits(ref, match);
   const divergentTraits = findDivergentTraits(ref, match);
+  const timbralComparison = compareTimbralProfiles(ref, match);
 
   return `You are a music supervisor explaining a track recommendation to a film editor in a cutting room.
 The editor has a reference track they love. You're telling them why this suggested royalty-free track will serve the same need.
 Be direct and specific. Speak like a person, not a product description.
+Explain the acoustic reasons behind your observations — connect what you hear to what the numbers show.
 
 What this suggestion shares with the reference:
 ${sharedTraits}
@@ -73,7 +77,11 @@ ${sharedTraits}
 Where this suggestion differs from the reference:
 ${divergentTraits}
 
-In 2–3 sentences: tell the editor why this suggestion will serve the same scene need.
+Timbral profiles of both tracks:
+${timbralComparison}
+
+In 3–4 sentences: tell the editor why this suggestion will serve the same scene need, and flag the most important difference they should know about.
+Use causal language — explain why qualities produce the feelings they do.
 No jargon. No bullet points.
 
 Choose ONE of these entry points based on what is most useful:
@@ -166,15 +174,12 @@ function compareWarmth(ref: number, match: number): TraitComparison | null {
 function findSharedTraits(ref: FeatureVector, match: FeatureVector): string {
   const traits: string[] = [];
 
-  // Energy arc — categorical, no continuous comparison available
   const refArc = classifyArc(ref.rms[0], ref.rms[2]);
   const matchArc = classifyArc(match.rms[0], match.rms[2]);
   if (refArc === matchArc) {
     traits.push(`Energy arc: both ${refArc}`);
   }
 
-  // Continuous dimensions — only "shared" if the comparison function
-  // returns null (values are actually close, not just in the same broad bucket)
   if (compareBrightness(ref.centroid[1], match.centroid[1]) === null) {
     const label = classifyBrightness(ref.centroid[1]);
     traits.push(`Brightness: both ${label} (centroid: ${ref.centroid[1].toFixed(1)} bins)`);
@@ -202,7 +207,6 @@ function findSharedTraits(ref: FeatureVector, match: FeatureVector): string {
 }
 
 function findDivergentTraits(ref: FeatureVector, match: FeatureVector): string {
-  // Collect all continuous comparisons with their magnitude
   const comparisons: TraitComparison[] = [
     compareBrightness(ref.centroid[1], match.centroid[1]),
     compareEnergy(ref.rms[1], match.rms[1]),
@@ -211,7 +215,6 @@ function findDivergentTraits(ref: FeatureVector, match: FeatureVector): string {
     compareWarmth(ref.mfcc_1[1], match.mfcc_1[1]),
   ].filter((c): c is TraitComparison => c !== null);
 
-  // Energy arc is categorical — insert with a fixed medium weight when different
   const refArc = classifyArc(ref.rms[0], ref.rms[2]);
   const matchArc = classifyArc(match.rms[0], match.rms[2]);
   if (refArc !== matchArc) {
@@ -221,12 +224,17 @@ function findDivergentTraits(ref: FeatureVector, match: FeatureVector): string {
     });
   }
 
-  // Sort by magnitude descending — most acoustically significant difference first
   comparisons.sort((a, b) => b.magnitude - a.magnitude);
 
   return comparisons.length > 0
     ? comparisons.slice(0, 4).map(c => c.label).join('\n')
     : 'Very close overall — minimal meaningful differences';
+}
+
+function compareTimbralProfiles(ref: FeatureVector, match: FeatureVector): string {
+  return `Timbral profiles (spectral envelope shape):
+  Reference — ${describeTimbralProfile(ref)}
+  Suggestion — ${describeTimbralProfile(match)}`;
 }
 
 // ── Classifier helpers ────────────────────────────────────────────────────
@@ -295,6 +303,7 @@ function describeVector(fv: FeatureVector): string {
     describeWidth(fv.spread[1]),
     describeHarmonic(fv),
     describeTimbral(fv.mfcc_1[1]),
+    describeTimbralProfile(fv),
   ];
   return lines.filter(Boolean).join('\n');
 }
@@ -349,19 +358,86 @@ function describeHarmonic(fv: FeatureVector): string {
   values.sort((a, b) => b.val - a.val);
   const top = values.slice(0, 3).map(v => v.note).join(', ');
   const spread = values[0].val - values[11].val;
-  if (spread < 0.05) return 'Harmonic content: tonally ambiguous — no clear pitch center';
-  if (spread < 0.12) return `Harmonic content: mild — gentle harmonic presence around ${top} (chroma spread: ${spread.toFixed(3)})`;
-  return `Harmonic content: strong — concentrated around ${top} (chroma spread: ${spread.toFixed(3)})`;
+  const minVal = values[11].val;
+  const isFloor = minVal > 0.35; // all notes present at meaningful levels
+
+  if (spread < 0.05) return 'Harmonic content: tonally ambiguous — no clear pitch center, chromatic or atonal';
+  if (spread < 0.15 || isFloor) return `Harmonic content: diffuse — pitch energy spread broadly across all notes, no strong tonal center (top notes: ${top}, spread: ${spread.toFixed(3)})`;
+  if (spread < 0.3) return `Harmonic content: moderate — some harmonic focus around ${top} but not strongly centered (chroma spread: ${spread.toFixed(3)})`;
+  return `Harmonic content: focused — concentrated around ${top} (chroma spread: ${spread.toFixed(3)})`;
 }
 
 function describeTimbral(mfcc1P50: number): string {
+  // mfcc_1 is dropped in similarity weighting (loudness-correlated) but
+  // retained here for prompt context — the LLM benefits from knowing overall
+  // timbral body even if it doesn't drive matching.
   const label = classifyWarmth(mfcc1P50);
   const descriptions: Record<string, string> = {
-    'warm and full-bodied': `Timbre: warm and full-bodied — low-frequency energy dominates (MFCC 1: ${mfcc1P50.toFixed(1)})`,
-    'balanced':             `Timbre: balanced — neither particularly warm nor bright in character (MFCC 1: ${mfcc1P50.toFixed(1)})`,
-    'lean and bright':      `Timbre: lean and bright — upper partials prominent, not a heavy sound (MFCC 1: ${mfcc1P50.toFixed(1)})`,
+    'warm and full-bodied': `Overall timbral body: warm and full — low-frequency energy dominates (MFCC 1: ${mfcc1P50.toFixed(1)})`,
+    'balanced':             `Overall timbral body: balanced — neither warm nor bright in character (MFCC 1: ${mfcc1P50.toFixed(1)})`,
+    'lean and bright':      `Overall timbral body: lean and bright — upper partials prominent (MFCC 1: ${mfcc1P50.toFixed(1)})`,
   };
   return descriptions[label] ?? '';
+}
+
+function describeTimbralProfile(fv: FeatureVector): string {
+  // mfcc_2 through mfcc_13 encode spectral envelope shape — the timbral
+  // "fingerprint" that distinguishes instrument families and textures.
+  // Treated in two groups based on library value ranges:
+  //   Body (2–5): large magnitudes, high inter-track variance — most differentiating
+  //   Texture (6–13): values near zero for most tracks, pattern matters more than magnitude
+
+  const body = [
+    { k: 'mfcc_2' as const, label: 'mfcc_2' },
+    { k: 'mfcc_3' as const, label: 'mfcc_3' },
+    { k: 'mfcc_4' as const, label: 'mfcc_4' },
+    { k: 'mfcc_5' as const, label: 'mfcc_5' },
+  ];
+
+  const texture = [
+    { k: 'mfcc_6'  as const, label: 'mfcc_6'  },
+    { k: 'mfcc_7'  as const, label: 'mfcc_7'  },
+    { k: 'mfcc_8'  as const, label: 'mfcc_8'  },
+    { k: 'mfcc_9'  as const, label: 'mfcc_9'  },
+    { k: 'mfcc_10' as const, label: 'mfcc_10' },
+    { k: 'mfcc_11' as const, label: 'mfcc_11' },
+    { k: 'mfcc_12' as const, label: 'mfcc_12' },
+    { k: 'mfcc_13' as const, label: 'mfcc_13' },
+  ];
+
+  // Body description — mfcc_2 is the most variable and differentiating
+  const mfcc2 = fv.mfcc_2[1];
+  let bodyChar: string;
+  if (mfcc2 > 49.9) bodyChar = 'very strong and full';
+  else if (mfcc2 > 13.9) bodyChar = 'strong';
+  else if (mfcc2 > 0) bodyChar = 'moderate';
+  else bodyChar = 'weak / recessed';
+
+  const bodyVals = body.map(b => `${b.label}: ${fv[b.k][1].toFixed(1)}`).join(', ');
+
+  // mfcc_2 spread as timbral consistency signal (p75 - p25)
+  const mfcc2Spread = fv.mfcc_2[2] - fv.mfcc_2[0];
+  const consistency = mfcc2Spread < 15
+    ? 'consistent timbre throughout'
+    : mfcc2Spread < 35
+    ? 'moderate timbral variation across the track'
+    : 'significant timbral variation — timbre shifts noticeably';
+
+  // Texture pattern — are high-order coefficients positive, negative, or near zero?
+  const textureVals = texture.map(t => fv[t.k][1]);
+  const texturePositive = textureVals.filter(v => v > 2).length;
+  const textureNegative = textureVals.filter(v => v < -2).length;
+  let textureChar: string;
+  if (texturePositive > 5) textureChar = 'fine texture active — articulated, detailed upper harmonics';
+  else if (textureNegative > 5) textureChar = 'fine texture suppressed — smooth, not articulated';
+  else textureChar = 'fine texture mixed — moderate harmonic detail';
+
+  const textureValStr = texture.map(t => `${t.label}: ${fv[t.k][1].toFixed(1)}`).join(', ');
+
+  return `Timbral profile (spectral envelope shape):
+  Body (mfcc_2–5): ${bodyChar} (${bodyVals})
+  Texture (mfcc_6–13): ${textureChar} (${textureValStr})
+  Timbral consistency: ${consistency} (mfcc_2 spread: ${mfcc2Spread.toFixed(1)})`;
 }
 
 // ── API call — via serverless proxy ───────────────────────────────────────

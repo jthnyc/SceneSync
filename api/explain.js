@@ -56,7 +56,7 @@ module.exports = async function handler(req, res) {
   };
 
   const ACTIVE_PROVIDER = process.env.LLM_PROVIDER || 'deepseek';
-  const MAX_TOKENS = 200;
+  const MAX_TOKENS = 350;
   // 0.7 balances variation (breaks template habit) with coherence.
   // Lower values (0.4) caused repetitive opening phrasing across tracks
   // with similar acoustic profiles. See explanationService.ts for context.
