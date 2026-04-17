@@ -46,6 +46,13 @@ The acoustic explanation layer — returning the reasoning behind a match, not j
 
 **Schema limitations:** No tempo (Meyda doesn't extract it), no instrument identity (MFCCs capture spectral envelope shape, not source — a clarinet and a synth pad with similar envelopes will have similar MFCC profiles).
 
+**MFCC value ranges (measured Apr 16, 2026 across 373-track library):**
+
+- mfcc_2: min -55.9, max 128.9, mean 32.9 — always positive in practice, most variable and differentiating
+- mfcc_3 onward: can go negative, progressively compressed ranges
+- Body group (mfcc_2–5): large magnitudes, high inter-track variance — most differentiating for timbre
+- Texture group (mfcc_6–13): values near zero for most tracks, pattern (positive/negative) matters more than magnitude
+
 ## Dimension weighting
 
 Not all 90 dimensions are weighted equally in similarity comparison. Based on the cross-source investigation (see `scripts/investigation/INVESTIGATION_NOTES.md`), loudness and production-density dimensions are downweighted or dropped:
@@ -70,7 +77,7 @@ Weight array lives in `src/services/similarityService.ts` as `DIMENSION_WEIGHTS`
 | Musopen | 63 | CC0 | Classical orchestral + solo piano |
 | YouTube Audio Library | 130 | YT AL | 3 batches targeting cinematic, ambient, dark, intimate |
 
-The library is cached in IndexedDB after first fetch. Cache is version-keyed via `LIBRARY_VERSION` in `similarityService.ts` — bump this constant when updating `feature_vectors.json`. Current version: `v2-373-patch1` (Schubert D.784 null interpolation patch).
+The library is cached in IndexedDB after first fetch. Cache is version-keyed via `LIBRARY_VERSION` in `similarityService.ts` — bump this constant when updating `feature_vectors.json`. Current version: `v3-373`.
 
 Pipeline scripts live in `scripts/pipeline/`. QA scripts in `scripts/qa/`. Cross-source investigation scripts in `scripts/investigation/`.
 
@@ -88,15 +95,43 @@ Pipeline scripts live in `scripts/pipeline/`. QA scripts in `scripts/qa/`. Cross
 
 ## Explanation layer
 
-The LLM translates feature values into plain-language descriptions. Raw numbers are never sent — they're first converted to semantic labels (e.g., centroid bin 29 → "warm, mid-heavy"; flatness 0.114 → "tonal, clean melodic character"). This is a translation problem, not classification, which is why an LLM works without training data.
+The LLM translates feature values into plain-language descriptions. Raw numbers are never sent — they're first converted to semantic labels. This is a translation problem, not classification, which is why an LLM works without training data.
+
+### What reaches the LLM
+
+Both prompt paths (reference and match) now include:
+
+- **Energy arc** — RMS p25/p50/p75 translated to a directional label (steady, builds, drops, dynamic)
+- **Brightness** — centroid bin mapped to warm/neutral/bright
+- **Texture** — flatness mapped to tonal/mixed/noisy
+- **Frequency width** — spread mapped to narrow/medium/wide
+- **Harmonic content** — dominant chroma notes with diffusion check (see below)
+- **Timbral body** — mfcc_1 label (warm/balanced/lean)
+- **Full timbral profile** — mfcc_2–13 translated into body character (mfcc_2–5 magnitude), fine texture pattern (mfcc_6–13 positive/negative pattern), and timbral consistency (mfcc_2 spread across p25/p75)
+
+MFCCs 2-13 were absent from prompts prior to Phase 7. They are the most differentiating timbral signal — their absence was the root cause of generic explanations.
+
+### Match prompts
+
+Match prompts always show both timbral profiles side by side. The shared/divergent conditional pattern used for scalar features (brightness, energy) was not applied to timbral profile — shape difference between two MFCC curves is holistic and loses meaning if shown only when divergent.
+
+### Harmonic diffusion detection
+
+`describeHarmonic()` uses an `isFloor` check: if the minimum chroma value across all 12 pitch classes exceeds 0.35, the track is described as tonally diffuse regardless of spread magnitude. A minimum of 0.43 with a spread of 0.445 is harmonically flat — all notes are present at meaningful levels. Without this check, `getDominantNote()` would return a misleading tonal center for these tracks.
+
+### Prompt settings
+
+- **Temperature:** 0.7 on all providers — lower values produced repetitive opening phrasing
+- **MAX_TOKENS:** 350 (raised from 200 in Phase 7 — 200 was genuinely constraining 4-5 sentence output)
+- **Output length:** 4-5 sentences for reference, 3-4 for match
+- **Voice:** No first-person narrator. "Speak directly" without "I'd", "Honestly,", "I would" etc.
+- **Causal language:** Prompts instruct the LLM to connect acoustic properties to perceptual effect, not just label them
 
 Two modes:
 - **Reference explanation:** Auto-fires on track load. Describes what the reference track is doing acoustically.
 - **Match explanation:** Auto-fires on match card select. Describes why the match works relative to the reference.
 
 Both are cached in IndexedDB on the `AnalyzedTrack` record (`referenceExplanation` and `matchExplanations` fields). No API call needed for previously explained tracks.
-
-Temperature is 0.7 across all providers — lower values produced repetitive opening phrasing.
 
 ## Serverless functions
 
@@ -168,6 +203,14 @@ Align the decode step across both environments. Two options, both deferred:
 
 Documented as an architectural constraint, not a bug. The gap is not user-visible for typical uploads.
 
+## NaN extraction bug (resolved Apr 15, 2026)
+
+Spectral shape features (centroid, spread, flatness) produced NaN from Meyda for silent or near-silent frames — Meyda divides by zero when a frame has no spectral energy. The `extract_features.js` pipeline was filtering invalid values with `!= null`, which does not catch `NaN` in JavaScript. NaN values entered the percentile sort, and JavaScript's `Array.sort` does not produce a defined order when the comparator returns NaN — producing p25/p75 inversions and other ordering violations.
+
+Fixed in `fix/extraction-nan` (PR #35, Apr 15): added `!Number.isNaN(value)` guard to all scalar feature accumulators. Full library re-extracted to `v3-373`. Percentile ordering validation (`p25 ≤ p50 ≤ p75`) added to `qa_screen_library.py` as a quality gate.
+
+Lesson: `!= null` is not NaN-safe in JavaScript. Any numeric filtering should use `Number.isFinite(value)` or explicit NaN checks.
+
 ## IndexedDB schema
 
 Single database: `SceneSyncAudioDB` (version 2).
@@ -190,13 +233,12 @@ Single database: `SceneSyncAudioDB` (version 2).
 | 7 | Sample rate hardcoded to 44100 | Watch | Pro audio setups may use 48000 |
 | 8 | `audio/x-m4a` console warning | Cosmetic | React DevTools, not app code |
 | 9 | Cross-source similarity gap | Investigated, mitigated | Weighting applied. Underlying divergence persists; library growth is complementary. |
-| 11 | StrictMode double-invoke | Dev only | `explainReference` excluded from deps intentionally |
 | 12 | Match explanation write race | Watch | Two rapid clicks could overwrite. Low probability. |
 | 14 | Skeleton loader timing | Cosmetic | Skeleton overlaps with ExtractionProgress during extraction phase |
-| 15 | DeepSeek explanation accuracy | Watch | Mood/texture sometimes hallucinated. Mitigated via opener rotation, raw values, temp 0.7. |
+| 15 | DeepSeek explanation accuracy | Watch | Significantly improved in Phase 7. Residual inaccuracy tied to short-track vectors. |
 | 17 | In-flight worker not aborted on new extraction | Watch | First worker can briefly set state before guard fires. Low probability. |
 | 18 | Browser/Node PCM gap | Documented, deferred | Entry point tracks score ~81% against themselves. See PCM gap section. |
-| 19 | FMA 130993 entry point — inaccurate LLM description | Watch | 29s duration too short for reliable percentiles. Flagged for replacement. |
+| 19 | FMA 130993 entry point — short-track vector unreliability | Study example | 29s duration too short for reliable percentile values. Retained intentionally. |
 
 ## Key decisions
 
@@ -210,14 +252,20 @@ Single database: `SceneSyncAudioDB` (version 2).
 | Browser/Node PCM gap | Deferred. ffmpeg.wasm is preferred fix path when bundle cost is acceptable. |
 | Bundle size | 627KB main.js (186KB gzipped). ffmpeg.wasm would be 48× increase. |
 | Data loading | `public/data/feature_vectors.json`, fetched at runtime, cached in IndexedDB |
-| LIBRARY_VERSION | `v2-373-patch1` — must bump when feature_vectors.json changes |
+| LIBRARY_VERSION | `v3-373` — must bump when feature_vectors.json changes |
 | LLM provider | DeepSeek default. Swap via `LLM_PROVIDER` env var. |
 | LLM API security | Serverless proxy (`api/explain.js`) — key never exposed to browser |
 | Provider config location | `api/explain.js` (server-side). `src/config/llmProvider.ts` deleted Mar 17. |
 | Rate limiting | In-memory, 30 req/hr per IP, resets on cold start. Vercel KV pinned as upgrade. |
 | Temperature | 0.7 on all providers. Lower values caused repetitive opening phrasing. |
+| MAX_TOKENS | 350 — raised from 200 in Phase 7. 200 was constraining 4-5 sentence output. |
+| MFCC 2-13 in prompts | Added Phase 7. Body group (2-5) by magnitude; texture group (6-13) by positive/negative pattern; timbral consistency from mfcc_2 spread. |
+| Timbral comparison | Always side-by-side in match prompts — shape difference is holistic, shouldn't be conditional. |
+| Harmonic diffusion | isFloor check (min chroma > 0.35) prevents false tonal centering on harmonically flat tracks. |
+| Explanation voice | No first-person narrator. Causal language — acoustic properties connect to perceptual effect. |
 | R2 audio proxy | `api/fetch-audio.js` — CORS workaround. Path prefix allowlist prevents abuse. |
 | Curated entry points | Chosen over text-to-recommendation — keeps users in the similarity engine. |
 | App.tsx role | Composition only — hook calls and prop wiring |
 | TrackExplanation | Pure display component — no caching or API calls |
-| Explanation signal | More perceptually honest than percentage for cross-source comparisons |
+| NaN guard | `!Number.isNaN(value)` — `!= null` is not NaN-safe in JavaScript. |
+| Short-track handling | Minimum ~60s recommended for reliable percentile values. 130993 (29s) retained as study example. |
