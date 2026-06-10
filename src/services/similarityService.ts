@@ -161,7 +161,7 @@ function zScore(
 // ── Service ───────────────────────────────────────────────────────────────
 
 // Bump this when you update public/data/feature_vectors.json
-const LIBRARY_VERSION = 'v5-573';
+const LIBRARY_VERSION = 'v6-688';
 class SimilarityService {
   private library: LibraryTrack[]    | null = null;
   private normalizedVecs: number[][] | null = null;
